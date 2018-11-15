@@ -1,3 +1,21 @@
+%{
+#include <iostream>
+#include <string>
+extern void yyerror(std::string);
+extern int yylex();
+extern int yyparse();
+%}
+
+%union {
+  char *str;
+  int num;
+}
+%token <str> WORD
+%token <str> NEWLINE
+%token <str> NAME
+%token <str> DGREAT
+%token <str> ASSIGNMENT_WORD
+%token <str> In
 
 %start program
 %%
