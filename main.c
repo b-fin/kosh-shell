@@ -3,6 +3,7 @@
 #include <string>
 #include "string.h"
 #include "lex.yy.h"
+#include "AST.h"
 #include "shell.tab.h"
 // End includes
 

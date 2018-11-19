@@ -5,10 +5,9 @@
 #include <assert.h>
 // End includes
 
-void Command_node::add_argument(char* arg_string) {
-  assert(arg_string);
+void Command_node::add_argument(Argument_node* argnode) {
   m_argument_count++;
-  m_arguments.push_back(arg_string);
+  m_arguments.push_back(argnode);
 }
 
 void Command_node::print(){
@@ -20,11 +19,24 @@ void Command_node::print(){
   } std::cout << std::endl;
 }
 
+Command_node::~Command_node(){
+  if (!m_arguments.empty()) {
+    for (uint i=0; i<m_arguments.size(); i++) {
+      delete m_arguments[i];
+    }
+  }
+}
+
 void Program_node::print(){
   std::cout<< "(Program_node):\t" << std::endl;
   m_command->print();
 }
 
+Program_node::~Program_node() {
+  if (m_command) {
+    delete m_command;
+  }
+}
 // THE FOLLOWING MAIN FUNCTION TESTED THE USAGE OF THE AST CLASSES
 /*
 int main() {
