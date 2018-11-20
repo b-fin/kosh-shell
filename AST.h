@@ -23,11 +23,15 @@ public:
 class Argument_node /*: public AST_node */{
 private:
   char *m_argument;
+  Argument_node* m_next; // !!!!!! remember to account for this 
 public:
   Argument_node(char* in_arg)
     : m_argument(in_arg){};
   ~Argument_node() = default;
+  void print();
 };
+
+
 
 class Command_node /*: public AST_node */{
 private:

@@ -32,7 +32,7 @@ int option_count = 0;
 
 %start program
 %%
-program     : command /*NEWLINE*/
+program     : command options
               {
                 $$ = new Program_node($1);
                 std::cout << "allocated(?) Program_node" << std::endl;
@@ -41,29 +41,33 @@ program     : command /*NEWLINE*/
                 std::cout << "freed(?) Program_node" << std::endl;
                 option_count=0;
               }
-            /*| NEWLINE */
+            | command
+              {
+                $$ = new Program_node($1);
+                $$->print();
+                delete $$;
+              }
             ;
-command     : cmd_word options
-                { $$ = new Command_node($1);
-                  $$->add_argument($2);
-                }
-            | cmd_word
-                {
-                 $$ = new Command_node($1);
-                }
+command     : cmd_word
+              { $$ = new Command_node($1);
+                std::cout<< "Found cmd_wrd (under command)" << std::endl;
+              }
             ;
 options     : options WORD
               { $$ = new Argument_node($2);
+                $<cmd_node>0->add_argument($$);
                 option_count++;
-                std::cout << "Option # " << option_count
+                std::cout << "(p1)Option # " << option_count
                 << ": " << $2 << std::endl;
               }
             | WORD
               { $$ = new Argument_node($1);
+                $<cmd_node>0->add_argument($$);
                 option_count++;
-                std::cout << "Option # " << option_count
+                std::cout << "(p2)Option # " << option_count
                 << ": " << $1 <<  std::endl;
               }
             ;
 cmd_word    : WORD { $$ = $1; std::cout << "Found a word: " << $1 << std::endl; }
             ;
+%%

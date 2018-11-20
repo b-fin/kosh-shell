@@ -5,6 +5,14 @@
 #include <assert.h>
 // End includes
 
+void Argument_node::print(){
+  std::cout<< "(Argument node):" << std::endl <<
+    "\tm_argument: " << m_argument << std::endl;
+}
+
+
+
+
 void Command_node::add_argument(Argument_node* argnode) {
   m_argument_count++;
   m_arguments.push_back(argnode);
@@ -15,7 +23,8 @@ void Command_node::print(){
     "\tcmd_word: " << m_cmd_word << std::endl <<
     "\tm_argument_count: " << m_argument_count << std::endl;
   for(int i = 0; i<m_argument_count; i++) {
-    std::cout<< "\tm_arguments["<<i<<"]: " <<m_arguments[i];
+    std::cout<< "\tm_arguments["<<i<<"]: ";
+    m_arguments[i]->print();
   } std::cout << std::endl;
 }
 
@@ -29,7 +38,9 @@ Command_node::~Command_node(){
 
 void Program_node::print(){
   std::cout<< "(Program_node):\t" << std::endl;
-  m_command->print();
+  if (m_command) {
+    m_command->print();
+  }
 }
 
 Program_node::~Program_node() {
