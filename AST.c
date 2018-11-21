@@ -130,8 +130,9 @@ std::string& Program_node::get_eval_string() {
   }
 
 int Program_node::eval(){
+  std::string strhm = get_eval_string();
   std::cout << "(eval()) get_eval_string(): " <<
-  "'" << get_eval_string() << "'" << std::endl;
+  "'" << strhm << "'" << std::endl;
   char *c_str = new char[get_eval_string().length()+1];
   std::strcpy(c_str, get_eval_string().c_str());
   int exit_status = system(c_str);
