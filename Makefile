@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -Wall -g -pedantic	-Wextra
+CXXFLAGS = -std=c++14 -Wall -g -O0 -pedantic	-Wextra -Wall
 
 shell: main.o lex.yy.o shell.tab.o AST.o
 	$(CXX) $(CXXFLAGS) -o $@ $^

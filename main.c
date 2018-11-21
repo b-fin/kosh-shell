@@ -7,14 +7,6 @@
 #include "shell.tab.h"
 // End includes
 
-// Small function that takes an std::string and returns it as a
-//  c-style string
-char* to_string(std::string& string_argument){
-  const int len = string_argument.length()+1;
-  char string_argument_copy[len];
-  return strcpy(string_argument_copy, string_argument.c_str());
-}
-
 void print_intro() {
   std::cout
   << "**************************************" << "\n"

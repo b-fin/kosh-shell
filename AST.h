@@ -24,7 +24,6 @@ public:
     : m_argument(in_arg){};
   ~Argument_node() = default;
   void print();
-  int get_length();
   std::string get_word();
 };
 
@@ -46,11 +45,8 @@ public:
   void print();
   bool has_arguments();
   int get_arg_count();
-  //int get_combined_arg_lengths();
-  //int get_length();
   std::string get_word();
   std::string arguments_string();
-  //char *get_arguments(char* holder);
 };
 //=============================================================================
 //=============================================================================
