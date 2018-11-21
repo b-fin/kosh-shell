@@ -47,6 +47,8 @@ Command_node::~Command_node(){
   if (!m_arguments.empty()) {
     for (uint i=0; i<m_arguments.size(); i++) {
       delete m_arguments[i];
+      std::cout << "deleted argument: " << i <<
+        "in Command_node deconstructor" << std::endl;
     }
   }
 }
@@ -89,9 +91,10 @@ void Program_node::print(){
 Program_node::~Program_node() {
   if (m_command) {
     delete m_command;
+    std::cout<< "Deleted m_command (in Program_node deconstructor)" << std::endl;
   }
 }
-
+/*
 // Returns the string that will be used in the system() call in the
 //  Program_node::eval() method.
 std::string& Program_node::get_eval_string() {
@@ -102,18 +105,26 @@ std::string& Program_node::get_eval_string() {
     }
   std::string& result_ref {result};
   return result_ref;
-  }
-
+}
+*/
 int Program_node::eval(){
-  std::string strhm = get_eval_string();
-  std::cout << "(eval()) get_eval_string(): " <<
-  "'" << strhm << "'" << std::endl;
-  char *c_str = new char[get_eval_string().length()+1];
-  std::strcpy(c_str, get_eval_string().c_str());
+  // ====== build string to be sent to system() ==========
+  std::string result{};                                 //
+  result = m_command->get_word();                       //
+  if (m_command->has_arguments()) {                     //
+    result += " " + m_command->arguments_string();      //
+  }                                                     //
+  //======================================================
+
+  std::cout<< "string to be sent to system(): "<<
+    result << std::endl;
+  // ======== convert to c-style string and send to system() ============
+  char *c_str = new char[result.length()+1];
+  std::strcpy(c_str, result.c_str());
   int exit_status = system(c_str);
   std::cout << "Okay we called system(), it returned " << exit_status <<std::endl;
+  delete[] c_str;
   return exit_status;
-
 }
 //=============================================================================
 //=============================================================================

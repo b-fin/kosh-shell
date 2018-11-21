@@ -63,6 +63,7 @@ options     : options WORD
                 option_count++;
                 std::cout << "(p1)Option # " << option_count
                 << ": " << $2 << std::endl;
+                free($2);
               }
             | WORD
               { $$ = new Argument_node($1);
@@ -70,8 +71,9 @@ options     : options WORD
                 option_count++;
                 std::cout << "(p2)Option # " << option_count
                 << ": " << $1 <<  std::endl;
+                free($1);
               }
             ;
-cmd_word    : WORD { $$ = $1; std::cout << "Found a word: " << $1 << std::endl; }
+cmd_word    : WORD { $$ = $1; std::cout << "Found a word: " << $1 << std::endl; free($1);}
             ;
 %%
