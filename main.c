@@ -26,7 +26,6 @@ void print_intro() {
 
 int main() {
   print_intro();
-
   for (;;) {
     std::string in_str;
     std::cout << ">> ";
@@ -36,7 +35,6 @@ int main() {
     strcpy(in_str_copy, in_str.c_str());
     std::cout << "Input string is:\n'" << in_str << "'" <<std::endl;
     YY_BUFFER_STATE bp = yy_scan_string(in_str_copy);
-
     if (in_str == "exit") {yy_delete_buffer(bp); break;}
     yyparse();
     yy_delete_buffer(bp);

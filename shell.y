@@ -16,6 +16,7 @@ int option_count = 0;
 /* no arguments after redirect */
 %union {
   char *str;
+  //std::string str;
   Argument_node *arg_node;
   Command_node *cmd_node;
   Program_node *prgm_node;
@@ -37,6 +38,7 @@ program     : command options
                 $$ = new Program_node($1);
                 std::cout << "allocated(?) Program_node" << std::endl;
                 $$->print();
+                $$->eval();
                 delete $$;
                 std::cout << "freed(?) Program_node" << std::endl;
                 option_count=0;
@@ -45,7 +47,9 @@ program     : command options
               {
                 $$ = new Program_node($1);
                 $$->print();
+                $$->eval();
                 delete $$;
+                option_count=0;
               }
             ;
 command     : cmd_word
