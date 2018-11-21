@@ -3,13 +3,13 @@ CXXFLAGS = -std=c++14 -Wall -g -O0 -pedantic	-Wextra -Wall
 
 shell: main.o lex.yy.o shell.tab.o AST.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
-main.o: main.c lex.yy.h shell.tab.h
-	$(CXX) $(CXXFLAGS) -c -o $@ main.c
+main.o: main.cpp lex.yy.h shell.tab.h
+	$(CXX) $(CXXFLAGS) -c -o $@ main.cpp
 lex.yy.o: lex.yy.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 shell.tab.o: shell.tab.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
-AST.o: AST.c
+AST.o: AST.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $^
 shell.tab.c shell.tab.h: shell.y
 	bison -d -v $^
