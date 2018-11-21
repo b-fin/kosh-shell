@@ -12,17 +12,11 @@
   ///////////////////////////
  // ARGUMENT NODE METHODS //
 ///////////////////////////
+
 void Argument_node::print(){
   std::cout<< "(Argument node):" << std::endl <<
     "\tm_argument: " << m_argument << std::endl;
 }
-
-int Argument_node::get_length(){
-  return m_argument.size();
-}
-
-
-
 
 std::string Argument_node::get_word(){
   return (m_argument + " ");
@@ -33,6 +27,7 @@ std::string Argument_node::get_word(){
   //////////////////////////
  // COMMAND NODE METHODS //
 /////////////////////////
+
 void Command_node::add_argument(Argument_node* argnode) {
   m_argument_count++;
   m_arguments.push_back(argnode);
@@ -59,15 +54,12 @@ Command_node::~Command_node(){
 bool Command_node::has_arguments(){
   return (!m_arguments.empty());
 }
-/*
-int Command_node::get_length(){
-  return m_cmd_word.size();
-}
-*/
+
 int Command_node::get_arg_count(){
   return m_argument_count;
 }
-
+// Retuns a single string concatenated from the node's arguments;
+//  To be used by the Program_node::get_eval_string() method.
 std::string Command_node::arguments_string(){
   std::string result {};
   for (int i=0; i<m_argument_count; i++) {
@@ -79,33 +71,14 @@ std::string Command_node::arguments_string(){
 std::string Command_node::get_word() {
   return m_cmd_word;
 }
-/*
-int Command_node::get_combined_arg_lengths(){
-  int total_length = 0;
-  for (int i = 0; i<m_argument_count; i++) {
-    total_length += m_arguments[i]->get_length();
-  }
-  return total_length;
-}
-std::string Command_node::get_word(){
-  return m_cmd_word;
-}
 
-
-char* Command_node::get_arguments(char* holder){
-  char result[get_combined_arg_lengths()];
-  for (int i = 0; i<m_argument_count; i++) {
-    strcat(result, m_arguments[i]->get_word()); // ?????
-  }
-  strcpy(holder, result); // ??????
-  return holder; // ?????
-}*/
 //=============================================================================
 //=============================================================================
 
   //////////////////////////
  // PROGRAM NODE METHODS //
 //////////////////////////
+
 void Program_node::print(){
   std::cout<< "(Program_node):\t" << std::endl;
   if (m_command) {
@@ -119,6 +92,8 @@ Program_node::~Program_node() {
   }
 }
 
+// Returns the string that will be used in the system() call in the
+//  Program_node::eval() method.
 std::string& Program_node::get_eval_string() {
   std::string result {};
   result = m_command->get_word();
