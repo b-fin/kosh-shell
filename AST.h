@@ -20,8 +20,8 @@ class Argument_node /*: public AST_node */{
 private:
   std::string m_argument;
 public:
-  Argument_node(std::string in_arg)
-    : m_argument(in_arg){};
+  Argument_node(char* in_arg)
+    : m_argument(in_arg){ free(in_arg); };
   ~Argument_node() = default;
   void print();
   std::string get_word();
@@ -38,8 +38,9 @@ private:
 public:
   // On initialization, the vector will have size 0,
   //  arg_count is 0, and word is whatever word flex returnhttps://app.e2ma.net/app2/audience/signup/1826152/1722524/?r=signups
-  Command_node(std::string cmd_input)
-    : m_argument_count(0),m_arguments(0), m_cmd_word(cmd_input) {};
+  Command_node(char* cmd_input)
+    : m_argument_count(0),m_arguments(0), m_cmd_word(cmd_input)
+    { free(cmd_input); };
   ~Command_node();
   void add_argument(Argument_node*);
   void print();
