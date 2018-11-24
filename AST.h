@@ -5,7 +5,6 @@
 // Begin header guards
 #ifndef _AST_H
 #define _AST_H
-// End header guards
 
 // Begin includes:
 #include <vector>
@@ -55,7 +54,6 @@ public:
 class Program_node /*: public AST_node*/ {
 private:
   Command_node* m_command;
-  // later will have room for other shits
 public:
   Program_node(Command_node* cmd_node_inpt)
     : m_command(cmd_node_inpt) {};
@@ -66,4 +64,4 @@ public:
 };
 //=============================================================================
 //=============================================================================
-#endif // _AST_H
+#endif // End header guards
