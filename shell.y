@@ -28,7 +28,7 @@ int option_count = 0;
 %type <arg_node> options
 %type <str> cmd_word
 %token <str> WORD NAME FOR DGREAT SET STRING FROM
-%token NEWLINE WHITESPACE
+%token NEWLINE
 
 
 %start program
@@ -37,19 +37,21 @@ program     : command options
               {
                 $$ = new Program_node($1);
                 root = $$;
-                root->print();
+                //root->print();
                 option_count=0;
               }
             | command
               {
                 $$ = new Program_node($1);
                 root = $$;
-                root->print();
+                //root->print();
                 option_count=0;
               }
             ;
 command     : cmd_word
               { $$ = new Command_node($1); }
+
+
             ;
 options     : options WORD
               { $$ = new Argument_node($2);
@@ -57,6 +59,11 @@ options     : options WORD
                 option_count++;
               }
             | WORD
+              { $$ = new Argument_node($1);
+                $<cmd_node>0->add_argument($$);
+                option_count++;
+              }
+            | STRING
               { $$ = new Argument_node($1);
                 $<cmd_node>0->add_argument($$);
                 option_count++;

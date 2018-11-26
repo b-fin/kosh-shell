@@ -10,19 +10,20 @@
 #define PATH_SIZE 256
 
 int Shell::run() {
-  Shell::print_intro();
   std::string in_string;
   extern Program_node *root;
 
   char *line_prefix = new char[PATH_SIZE];
   line_prefix = getcwd( line_prefix, PATH_SIZE);
   if (!line_prefix) { return -1; } // cwd error
-
-  std::cout<< line_prefix << ": ";
-  std::getline(std::cin, in_string);
+  do {
+    // Handle empty commands ie lone carriage returns
+    std::cout<< line_prefix << ": ";
+    std::getline(std::cin, in_string);
+  } while(in_string == "");
   char *str_copy = new char[in_string.size()+1];
   strcpy(str_copy, in_string.c_str());
-  std::cout << "Input string is:\n'" << in_string << "'" <<std::endl;
+  /*std::cout << "Input string is:\n'" << in_string << "'" <<std::endl; */
   YY_BUFFER_STATE bp = yy_scan_string(str_copy);
   yyparse();
   int exit_status = root->eval();
@@ -32,8 +33,8 @@ int Shell::run() {
   delete root;
 
 
-  std::cout<< "[RUN()] Deleted str_copy, deleted root, returning: " <<
-    exit_status << std::endl;
+  /* std::cout<< "[RUN()] Deleted str_copy, deleted root, returning: " <<
+    exit_status << std::endl; */
   return exit_status;
 }
 
