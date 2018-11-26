@@ -8,12 +8,14 @@
 #include "Shell.h"
 // End includes
 
-
 int main() {
   Shell *sh = new Shell();
-  int exit_status = sh->run();
+  extern bool AST_exit;
+  do {
+    sh->run();
+  } while(!AST_exit);
+  std::cout<< "[MAIN()] exiting KOSH" << std::endl;
   delete sh;
 
-
-  return exit_status;
+  return 0;
 }

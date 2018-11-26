@@ -2,43 +2,39 @@
 
 // Begin includes:
 #include "Shell.h"
+#include "shell.tab.h"
+#include "lex.yy.h"
+#include "unistd.h"
 // End includes:
 
-// Build up and initialize structures we'll need later, eg
-//  symbol table, environment variables, etc.
-/*
-Shell::Shell() {
+#define PATH_SIZE 256
 
-}
-
-// Delete and free all the memory allocated above and during the course
-//  of execution.
-Shell::~Shell(){
-
-}
-*/
 int Shell::run() {
   Shell::print_intro();
   std::string in_string;
-  do {
-    std::cout<< ">> ";
-    std::getline(std::cin, in_string);
-    char *str_copy = new char[in_string.size()+1];
-    strcpy(str_copy, in_string.c_str());
-    std::cout << "Input string is:\n'" << in_string << "'" <<std::endl;
-    YY_BUFFER_STATE bp = yy_scan_string(str_copy);
-    if (in_string == "exit") {
-      yy_delete_buffer(bp);
-      delete[] str_copy;
-      break; // Placeholder
-    }
-    yyparse();
-    yy_delete_buffer(bp);
-    delete[] str_copy;
+  extern Program_node *root;
+
+  char *line_prefix = new char[PATH_SIZE];
+  line_prefix = getcwd( line_prefix, PATH_SIZE);
+  if (!line_prefix) { return -1; } // cwd error
+
+  std::cout<< line_prefix << ": ";
+  std::getline(std::cin, in_string);
+  char *str_copy = new char[in_string.size()+1];
+  strcpy(str_copy, in_string.c_str());
+  std::cout << "Input string is:\n'" << in_string << "'" <<std::endl;
+  YY_BUFFER_STATE bp = yy_scan_string(str_copy);
+  yyparse();
+  int exit_status = root->eval();
+  yy_delete_buffer(bp);
+  delete[] line_prefix;
+  delete[] str_copy;
+  delete root;
 
 
-  } while(true);
-  return 0;
+  std::cout<< "[RUN()] Deleted str_copy, deleted root, returning: " <<
+    exit_status << std::endl;
+  return exit_status;
 }
 
 

@@ -1,13 +1,16 @@
 /* Grammar modified from POSIX shell specification */
-/* NEW BISON FILE 11/16/18 */
+/* NEW BISON FILE 11/25/18 */
 %code requires {
 #include "AST.h"
 }
 
 %{
-#include <iostream> // std::cout<<
+#include <iostream>
 #include <string>
+#include "Shell.h"
 
+Program_node *root; /* Hopefully this will allow our AST to persist
+                                * beyond the lifetime of yyparse() */
 extern void yyerror(std::string);
 extern int yylex();
 extern int yyparse();
@@ -27,25 +30,21 @@ int option_count = 0;
 %token <str> WORD NAME FOR DGREAT SET STRING FROM
 %token NEWLINE WHITESPACE
 
-%nonassoc WORD2
-%nonassoc WORD
 
 %start program
 %%
 program     : command options
               {
                 $$ = new Program_node($1);
-                $$->print();
-                $$->eval();
-                delete $$;
+                root = $$;
+                root->print();
                 option_count=0;
               }
             | command
               {
                 $$ = new Program_node($1);
-                $$->print();
-                $$->eval();
-                delete $$;
+                root = $$;
+                root->print();
                 option_count=0;
               }
             ;
@@ -56,9 +55,6 @@ options     : options WORD
               { $$ = new Argument_node($2);
                 $<cmd_node>0->add_argument($$);
                 option_count++;
-                //std::cout << "(p1)Option # " << option_count
-                //<< ": " << $2 << std::endl;
-                //free($2);
               }
             | WORD
               { $$ = new Argument_node($1);
