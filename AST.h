@@ -1,74 +1,152 @@
-// The interface file for our AST class. For now it will mostly
-//  handle simple command nodes, later we'll beef it up to handle
-//  semicolon operators, pipe operators, and redirection operators.
+// Interface file for the second version of the AST structure.
 
-// Begin header guards
-#ifndef _AST_H
-#define _AST_H
+#ifndef __AST_H
+#define __AST_H
 
-// Begin includes:
-#include <vector>
 #include <iostream>
 #include <string>
-// End includes
+#include <vector>
 
-
-//      || Argument Node ||     //
-class Argument_node {
+class Arguments {
 private:
-  std::string m_argument;
+  std::vector<std::string> m_arguments;
+  int m_arg_count;
 public:
-  Argument_node(char* in_arg)
-    : m_argument(in_arg){ free(in_arg); };
-  ~Argument_node() = default;
-  void print();
-  std::string get_word();
+  Arguments(char *in_str)
+    : m_arguments{}, m_arg_count{0} {
+      std::string arg1(in_str);
+      m_arguments.push_back(arg1);
+      m_arg_count++;
+      free(in_str);
+    };
+  ~Arguments()=default;
+  void add_argument(std::string);
+  void print() const;
 };
 
 
-
-//        || Command Node ||      //
-class Command_node {
+class Set {
 private:
-  int m_argument_count;
-  std::vector<Argument_node*> m_arguments;
+  std::string m_varname;
+  std::string m_value;
+
+public:
+  Set(char *in1, char *in2)
+    : m_varname{}, m_value{} {
+      m_varname.assign(in1);
+      m_value.assign(in2);
+      free(in1);
+      free(in2);
+    };
+  ~Set()=default;
+  void print() const;
+};
+
+class S_command {
+private:
+  bool m_is_set = false;
+  Set *m_set;
   std::string m_cmd_word;
+  Arguments *m_arguments;
+  int m_arg_count;
+
 public:
-  Command_node(char* cmd_input)
-    : m_argument_count(0),m_arguments(0), m_cmd_word(cmd_input)
-    { free(cmd_input); };
-  ~Command_node();
-  void print();
-  void add_argument(Argument_node*);
-  bool has_arguments();
-  int get_arg_count();
-  std::string get_word();
-  std::string arguments_string();
-  std::string get_argument_n(int n);
+  S_command(Set *in_set, char *in_cw, Arguments *in_arg)
+    : m_set(in_set), m_cmd_word{}, m_arguments(in_arg) {
+      m_cmd_word.assign(in_cw);
+      free(in_cw);
+    };
+  ~S_command();
+  //void add_arguments(const Arguments*);
+  void print() const;
+  void make_set();
 };
 
 
-//      || Program Node ||      //
-class Program_node {
+class For {
+  // stub
+};
+
+class C_command {
+  // stub
+};
+
+class Command {
 private:
-  Command_node* m_command;
+  // one of these must be nullptr
+  S_command *m_s_command;
+  C_command *m_c_command;
 public:
-  Program_node(Command_node* cmd_node_inpt)
-    : m_command(cmd_node_inpt) {};
-  Program_node()
-    : m_command(nullptr) {};
-  ~Program_node();
-  void add_command_node(Command_node*);
-  void print();
-  int call_cd();
-  int call_exit();
-  int call_echo();
-  int call_source();
-  int call_pwd();
-  int eval();
-  std::string& get_eval_string();
+  Command(S_command* in_s, C_command* in_c)
+    : m_s_command(in_s), m_c_command(in_c) {};
+  ~Command();
+  void print() const;
+
+};
+
+class List {
+  //stub
+};
+
+class Redirect {
+private:
+  std::string m_type;
+  std::string m_filename;
+public:
+  Redirect(char *in1, char *in2)
+    : m_type{}, m_filename{} {
+      m_type.assign(in1);
+      m_filename.assign(in2);
+      free(in1);
+      free(in2);
+    };
+  ~Redirect() = default;
+  void print() const;
+};
+
+class Pipe_seq {
+private:
+  Pipe_seq *m_pipe_seq;
+  Command *m_command;
+public:
+  Pipe_seq(Pipe_seq *in_p, Command *in_c)
+    : m_pipe_seq(in_p), m_command(in_c) {};
+  ~Pipe_seq();
+  void  print() const;
+};
+
+class Ccs {
+private:
+  // Eventually, we will want to keep track of:
+  //   - how many redirects, of what kind, and where
+  //   - how many pipes and where
+  Ccs *m_ccs;
+  Pipe_seq *m_pipe_seq;
+  Redirect *m_redirect;
+public:
+  Ccs(Ccs *in_cc, Pipe_seq *in_p, Redirect *in_r)
+    : m_ccs(in_cc), m_pipe_seq(in_p), m_redirect(in_r) {};
+  ~Ccs();
+  void print() const;
+};
+
+class Program {
+private:
+  // Eventually, we will want to keep track of:
+  //    - how many complete commands (separated by ';')
+  //    - background execution?
+  Ccs *m_ccs;
+  bool m_background;
+public:
+  Program(Ccs *in_cc)
+    : m_ccs(in_cc) {};
+  ~Program();
+  void print() const;
+  void set_bg();
 };
 
 
-extern Program_node* prg_node;
-#endif // End header guards
+
+
+
+#endif

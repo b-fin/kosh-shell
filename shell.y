@@ -1,16 +1,13 @@
-/* Grammar modified from POSIX shell specification */
-/* NEW BISON FILE 11/25/18 */
+/* nth attempt at a grammar */
+/* 11/29/18 */
 %code requires {
-#include "AST.h"
+  #include "AST.h"
 }
 
 %{
+#define yydebug 1
 #include <iostream>
 #include <string>
-#include "Shell.h"
-
-Program_node *root; /* Hopefully this will allow our AST to persist
-                                * beyond the lifetime of yyparse() */
 extern void yyerror(std::string);
 extern int yylex();
 extern int yyparse();
@@ -19,56 +16,76 @@ int option_count = 0;
 
 %union {
   char *str;
-  Argument_node *arg_node;
-  Command_node *cmd_node;
-  Program_node *prgm_node;
+  Program *prog;
+  Pipe_seq *pipe_s;
+  Ccs *complcom;
+  Redirect *redir;
+  List *lst;
+  Command *cmd;
+  S_command *scmd;
+  C_command *ccmd;
+  For *for_node;
+  Set *set;
+  Arguments *args;
 }
-%type <cmd_node> command
-%type <prgm_node> program
-%type <arg_node> options
+%type <prog> program
+%type <complcom> complete_commands
+%type <pipe_s> pipe_sequence
+%type <redir> redirect
+%type <lst> list
+%type <cmd> command
+%type <scmd> simple_command
+%type <ccmd> compound_command
+%type <for_node> for_clause
+%type <set> set_clause
+%type <args> arguments
 %type <str> cmd_word
-%token <str> WORD NAME FOR DGREAT SET STRING FROM
-%token NEWLINE
 
-
-%start program
+%token <str> WORD NAME FOR DGREAT SET STRING FROM NEWLINE PIPE SEMICOLON
+%token <str> COLON LESS GREAT EQUAL AMP
+%{
+Program *root;
+%}
 %%
-program     : command options
-              {
-                $$ = new Program_node($1);
-                root = $$;
-                //root->print();
-                option_count=0;
-              }
-            | command
-              {
-                $$ = new Program_node($1);
-                root = $$;
-                //root->print();
-                option_count=0;
-              }
-            ;
-command     : cmd_word
-              { $$ = new Command_node($1); }
 
-
-            ;
-options     : options WORD
-              { $$ = new Argument_node($2);
-                $<cmd_node>0->add_argument($$);
-                option_count++;
-              }
-            | WORD
-              { $$ = new Argument_node($1);
-                $<cmd_node>0->add_argument($$);
-                option_count++;
-              }
-            | STRING
-              { $$ = new Argument_node($1);
-                $<cmd_node>0->add_argument($$);
-                option_count++;
-              }
-            ;
-cmd_word    : WORD { $$ = $1; }
-            ;
-%%
+program           : complete_commands { $$ = new Program($1); root = $$;  }
+                  | complete_commands AMP { $$ = new Program($1); $$ = root; $$->set_bg(); free($2); }
+                  ;
+complete_commands : complete_commands SEMICOLON pipe_sequence redirect
+                        { $$ = new Ccs($1,$3,$4); free($2); }
+                  | complete_commands SEMICOLON pipe_sequence
+                        { $$ = new Ccs($1,$3,nullptr); free($2); }
+                  | pipe_sequence redirect
+                        { $$ = new Ccs(nullptr,$1,$2); }
+                  | pipe_sequence
+                        { $$ = new Ccs(nullptr,$1,nullptr); }
+                  ;
+pipe_sequence     : pipe_sequence PIPE command { $$ = new Pipe_seq($1,$3); free($2); }
+                  | command { $$ = new Pipe_seq(nullptr,$1); }
+                  ;
+command           : simple_command { $$ = new Command($1,nullptr); }
+                  | compound_command { $$ = new Command(nullptr,$1); }
+                  ;
+simple_command    : set_clause { $$ = new S_command($1,nullptr,nullptr); $$->make_set(); }
+                  | cmd_word arguments { $$ = new S_command(nullptr,$1,$2); }
+                  | cmd_word { $$ = new S_command(nullptr,$1,nullptr); }
+                  ;
+compound_command  : for_clause { /* stub */ }
+                  ;
+set_clause        : SET NAME EQUAL WORD { $$ = new Set($2,$4); free($1); free($3); }
+                  | SET NAME EQUAL STRING { $$ = new Set($2,$4); free($1); free($3); }
+                  ;
+for_clause        : FOR NAME FROM list COLON simple_command { free($1); free($3); }
+                  ;
+arguments         : arguments WORD { $$ = $1; $$->add_argument($2); $$->print(); }
+                  | WORD { $$ = new Arguments($1); $$->print(); }
+                  ;
+redirect          : LESS WORD { /* stub */ }
+                  | GREAT WORD { /* stub */ }
+                  | DGREAT WORD { /* stub */ }
+                  ;
+cmd_word          : WORD { $$ = $1; std::cout<< "\t\tcmd_word is: " << $1 << "\n";  }
+                  ;
+list              : list WORD { /* stub */ }
+                  | WORD { /* stub */ }
+                  ;
