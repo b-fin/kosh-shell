@@ -52,15 +52,19 @@ program           : complete_commands { $$ = new Program($1); root = $$;  }
                   | complete_commands AMP { $$ = new Program($1); $$ = root; $$->set_bg(); free($2); }
                   ;
 complete_commands : complete_commands SEMICOLON pipe_sequence redirect
-                        { $$ = new Ccs($1,$3,$4); free($2); }
+                        { Ccs *temp = new Ccs(nullptr,$3,$4); free($2);
+                          $$ = $1; $$->add_ccs(temp); }
                   | complete_commands SEMICOLON pipe_sequence
-                        { $$ = new Ccs($1,$3,nullptr); free($2); }
+                        { Ccs *temp = new Ccs(nullptr,$3,nullptr); free($2);
+                          $$ = $1; $$->add_ccs(temp); }
                   | pipe_sequence redirect
                         { $$ = new Ccs(nullptr,$1,$2); }
                   | pipe_sequence
                         { $$ = new Ccs(nullptr,$1,nullptr); }
                   ;
-pipe_sequence     : pipe_sequence PIPE command { $$ = new Pipe_seq($1,$3); free($2); }
+pipe_sequence     : pipe_sequence PIPE command
+                        { Pipe_seq *temp = new Pipe_seq(nullptr,$3); free($2);
+                          $$ = $1; $$->add_pipe_seq(temp); }
                   | command { $$ = new Pipe_seq(nullptr,$1); }
                   ;
 command           : simple_command { $$ = new Command($1,nullptr); }

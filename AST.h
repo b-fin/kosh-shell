@@ -158,6 +158,7 @@ public:
       }
     };
   Pipe_seq& operator=(const Pipe_seq& source);
+  void add_pipe_seq(Pipe_seq *source) { m_pipe_seq = source; }
   ~Pipe_seq();
   void  print() const;
 };
@@ -186,6 +187,7 @@ public:
       }
     };
   Ccs& operator=(const Ccs& source);
+  void add_ccs(Ccs *source) { m_ccs = source; };
   ~Ccs();
   void print() const;
 };
