@@ -22,6 +22,7 @@ public:
   ~Arguments()=default;
   void add_argument(std::string);
   void print() const;
+  int get_arg_count() const;
 };
 
 
@@ -48,12 +49,14 @@ private:
   Set *m_set;
   std::string m_cmd_word;
   Arguments *m_arguments;
-  int m_arg_count;
+//  int m_arg_count;
 
 public:
   S_command(Set *in_set, char *in_cw, Arguments *in_arg)
     : m_set(in_set), m_cmd_word{}, m_arguments(in_arg) {
       m_cmd_word.assign(in_cw);
+      if (m_cmd_word == "set") { m_is_set=true; }
+    //  m_arg_count = m_arguments->get_arg_count();
       free(in_cw);
     };
   ~S_command();

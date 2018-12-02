@@ -3,9 +3,9 @@
 %code requires {
   #include "AST.h"
 }
-
+%define parse.trace true
 %{
-#define yydebug 1
+#define YYDEBUG 1
 #include <iostream>
 #include <string>
 extern void yyerror(std::string);
@@ -77,8 +77,8 @@ set_clause        : SET NAME EQUAL WORD { $$ = new Set($2,$4); free($1); free($3
                   ;
 for_clause        : FOR NAME FROM list COLON simple_command { free($1); free($3); }
                   ;
-arguments         : arguments WORD { $$ = $1; $$->add_argument($2); $$->print(); }
-                  | WORD { $$ = new Arguments($1); $$->print(); }
+arguments         : arguments WORD { $$ = $1; $$->add_argument($2); }
+                  | WORD { $$ = new Arguments($1); }
                   ;
 redirect          : LESS WORD { /* stub */ }
                   | GREAT WORD { /* stub */ }

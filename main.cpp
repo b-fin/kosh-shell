@@ -4,6 +4,7 @@
 #include "lex.yy.h"
 
 int main(){
+  yydebug = 1;
   extern Program *root;
   std::string instring;
   std::getline(std::cin,instring);
@@ -14,6 +15,6 @@ int main(){
   yyparse();
   root->print();
   yy_delete_buffer(bp);
-  delete str_copy;
+  delete[] str_copy;
   delete root;
 }
