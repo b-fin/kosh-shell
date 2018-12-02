@@ -14,7 +14,10 @@ int main(){
   YY_BUFFER_STATE bp = yy_scan_string(str_copy);
   yyparse();
   root->print();
+  //Program *newroot = new Program(*root);
+  //newroot->print();
   yy_delete_buffer(bp);
   delete[] str_copy;
   delete root;
+  //delete newroot;
 }

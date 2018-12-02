@@ -80,9 +80,9 @@ for_clause        : FOR NAME FROM list COLON simple_command { free($1); free($3)
 arguments         : arguments WORD { $$ = $1; $$->add_argument($2); }
                   | WORD { $$ = new Arguments($1); }
                   ;
-redirect          : LESS WORD { /* stub */ }
-                  | GREAT WORD { /* stub */ }
-                  | DGREAT WORD { /* stub */ }
+redirect          : LESS WORD { $$ = new Redirect($1,$2); }
+                  | GREAT WORD { $$ = new Redirect($1,$2); }
+                  | DGREAT WORD { $$ = new Redirect($1,$2); }
                   ;
 cmd_word          : WORD { $$ = $1; std::cout<< "\t\tcmd_word is: " << $1 << "\n";  }
                   ;

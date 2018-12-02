@@ -6,9 +6,26 @@
 // Arguments methods /////////////
 //////////////////////////////////
 
-void Arguments::add_argument(std::string in_str) {
-  m_arguments.push_back(in_str);
+Arguments& Arguments::operator=(const Arguments &source) {
+  if (this == &source) {
+    return *this;
+  }
+  m_arguments.clear();
+  m_arg_count = 0;
+  for (int i=0; i<source.m_arg_count; i++) {
+    std::string new_arg(source.m_arguments[i]);
+    m_arguments.push_back(new_arg);
+    m_arg_count++;
+  }
+  return *this;
+
+}
+
+void Arguments::add_argument(char *in_str) {
+  std::string new_arg(in_str);
+  m_arguments.push_back(new_arg);
   m_arg_count++;
+  free(in_str);
 }
 
 void Arguments::print() const {
@@ -26,6 +43,15 @@ int Arguments::get_arg_count() const {
 // Set methods ///////////////////
 //////////////////////////////////
 
+Set& Set::operator=(const Set& source) {
+  if (this == &source) {
+    return *this;
+  }
+  m_varname = source.m_varname;
+  m_value = source.m_value;
+  return *this;
+}
+
 void Set::print() const {
   std::cout<< "**** SET ****\n"<<
   "\tVarname: " << m_varname << std::endl <<
@@ -33,9 +59,31 @@ void Set::print() const {
   std::cout<< "**** END SET ****\n";
 }
 
+
 //////////////////////////////////
 // S_command methods /////////////
 //////////////////////////////////
+
+S_command& S_command::operator=(const S_command& source) {
+  if (this == &source) {
+    return *this;
+  }
+  m_cmd_word = source.m_cmd_word;
+  if (m_set) {
+    delete m_set;
+  }
+  if (m_arguments) {
+    delete m_arguments;
+  }
+  if (source.m_set) {
+    m_set = new Set(*source.m_set);
+    m_is_set = true;
+  }
+  else if (source.m_arguments) {
+    m_arguments = new Arguments(*source.m_arguments);
+  }
+  return *this;
+}
 
 S_command::~S_command() {
   if (m_set) { delete m_set; }
@@ -65,6 +113,26 @@ void S_command::make_set() {
 //////////////////////////////////
 // Command methods ///////////////
 //////////////////////////////////
+
+Command& Command::operator=(const Command& source) {
+  if (this == &source) {
+    return *this;
+  }
+  if (m_s_command) {
+    delete m_s_command;
+  }
+  if (m_c_command) {
+    delete m_c_command;
+  }
+  if (source.m_s_command) {
+    m_s_command = new S_command(*source.m_s_command);
+  }
+   else if (source.m_c_command) {
+    m_c_command = new C_command(*source.m_c_command);
+  }
+  return *this;
+}
+
 Command::~Command() {
   if (m_s_command) { delete m_s_command; }
   if (m_c_command) { delete m_c_command; }
@@ -82,6 +150,15 @@ void Command::print() const {
 // Redirect methods //////////////
 //////////////////////////////////
 
+Redirect& Redirect::operator=(const Redirect& source) {
+  if (this == &source) {
+    return *this;
+  }
+  m_type = source.m_type;
+  m_filename = source.m_filename;
+  return *this;
+}
+
 // DO NOT USE UNTIL ACTIONS ARE SET IN SHELL.Y
 void Redirect::print() const {
   std::cout<< "\n\t\t\t**** REDIRECT ****\n" <<
@@ -92,6 +169,26 @@ void Redirect::print() const {
 //////////////////////////////////
 // Pipe_seq methods //////////////
 //////////////////////////////////
+
+Pipe_seq& Pipe_seq::operator=(const Pipe_seq& source) {
+  if (this == &source){
+    return *this;
+  }
+  if (m_pipe_seq) {
+    delete m_pipe_seq;
+  }
+  if (m_command) {
+    delete m_command;
+  }
+  if (source.m_pipe_seq) {
+    m_pipe_seq = new Pipe_seq(*source.m_pipe_seq);
+  }
+  if (source.m_command) {
+    m_command = new Command(*source.m_command);
+  }
+  return *this;
+}
+
 Pipe_seq::~Pipe_seq() {
   if (m_pipe_seq) { delete m_pipe_seq; }
   if (m_command) { delete m_command; }
@@ -109,6 +206,32 @@ void Pipe_seq::print() const {
 //////////////////////////////////
 // Ccs methods ///////////////////
 //////////////////////////////////
+
+Ccs& Ccs::operator=(const Ccs& source) {
+  if (this == &source) {
+    return *this;
+  }
+  if (m_ccs) {
+    delete m_ccs;
+  }
+  if (m_pipe_seq) {
+    delete m_pipe_seq;
+  }
+  if (m_redirect) {
+    delete m_redirect;
+  }
+  if (source.m_ccs) {
+    m_ccs = new Ccs(*source.m_ccs);
+  }
+  if (source.m_pipe_seq) {
+    m_pipe_seq = new Pipe_seq(*source.m_pipe_seq);
+  }
+  if (source.m_redirect) {
+    m_redirect = new Redirect(*source.m_redirect);
+  }
+  return *this;
+}
+
 Ccs::~Ccs() {
   if (m_ccs) { delete m_ccs; }
   if (m_pipe_seq) { delete m_pipe_seq; }
@@ -129,6 +252,21 @@ void Ccs::print() const {
 //////////////////////////////////
 // Program methods ///////////////
 //////////////////////////////////
+
+Program& Program::operator=(const Program& source) {
+  if (this == &source) {
+    return *this;
+  }
+  if (m_ccs) {
+    delete m_ccs;
+  }
+  if (source.m_ccs) {
+    m_ccs = new Ccs(*source.m_ccs);
+  }
+  m_background = source.m_background;
+  return *this;
+}
+
 Program::~Program() {
   if (m_ccs) { delete m_ccs; }
 }
