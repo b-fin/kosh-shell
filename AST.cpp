@@ -89,10 +89,6 @@ S_command::~S_command() {
   if (m_set) { delete m_set; }
   if (m_arguments) { delete m_arguments; }
 }
-/*
-void S_command::add_arguments(const Arguments* in_args) {
-
-} */
 
 void S_command::print() const {
   std::cout<< "\n\t\t\t\t\t**** S_COMMAND ****\n" <<

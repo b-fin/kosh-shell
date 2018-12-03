@@ -8,10 +8,11 @@
 #include <vector>
 
 class Arguments {
-private:
+public:
+//private:
   std::vector<std::string> m_arguments;
   int m_arg_count;
-public:
+//public:
   Arguments(char *in_str)
     : m_arguments{}, m_arg_count{0} {
       std::string arg1(in_str);
@@ -36,11 +37,12 @@ public:
 
 
 class Set {
-private:
+public:
+//private:
   std::string m_varname;
   std::string m_value;
 
-public:
+//public:
   Set(char *in1, char *in2)
     : m_varname{}, m_value{} {
       m_varname.assign(in1);
@@ -56,20 +58,23 @@ public:
 };
 
 class S_command {
-private:
+public:
+  //private:
   bool m_is_set = false;
   Set *m_set;
   std::string m_cmd_word;
   Arguments *m_arguments;
-//  int m_arg_count;
 
-public:
+//public:
   S_command(Set *in_set, char *in_cw, Arguments *in_arg)
     : m_set(in_set), m_cmd_word{}, m_arguments(in_arg) {
-      m_cmd_word.assign(in_cw);
-      if (m_cmd_word == "set") { m_is_set=true; }
-    //  m_arg_count = m_arguments->get_arg_count();
-      free(in_cw);
+      if (!in_cw) {
+        m_cmd_word = "set";
+        m_is_set = true;
+      } else {
+        m_cmd_word.assign(in_cw);
+        free(in_cw);
+      }
     };
   // The destructor deletes the member pointers; so we should allocate
   // shit
@@ -85,7 +90,6 @@ public:
     };
   S_command& operator=(const S_command &source);
   ~S_command();
-  //void add_arguments(const Arguments*);
   void print() const;
   void make_set();
 };
@@ -100,11 +104,12 @@ class C_command {
 };
 
 class Command {
-private:
+public:
+//private:
   // one of these must be nullptr
   S_command *m_s_command;
   C_command *m_c_command;
-public:
+//public:
   Command(S_command* in_s, C_command* in_c)
     : m_s_command(in_s), m_c_command(in_c) {};
   Command(const Command& source)
@@ -123,10 +128,11 @@ class List {
 };
 
 class Redirect {
-private:
+public:
+//private:
   std::string m_type;
   std::string m_filename;
-public:
+//public:
   Redirect(char *in1, char *in2)
     : m_type{}, m_filename{} {
       m_type.assign(in1);
@@ -142,10 +148,11 @@ public:
 };
 
 class Pipe_seq {
-private:
+public:
+//private:
   Pipe_seq *m_pipe_seq;
   Command *m_command;
-public:
+//public:
   Pipe_seq(Pipe_seq *in_p, Command *in_c)
     : m_pipe_seq(in_p), m_command(in_c) {};
   Pipe_seq(const Pipe_seq& source)
@@ -164,14 +171,15 @@ public:
 };
 
 class Ccs {
-private:
+//private:
+public:
   // Eventually, we will want to keep track of:
   //   - how many redirects, of what kind, and where
   //   - how many pipes and where
   Ccs *m_ccs;
   Pipe_seq *m_pipe_seq;
   Redirect *m_redirect;
-public:
+//public:
   Ccs(Ccs *in_cc, Pipe_seq *in_p, Redirect *in_r)
     : m_ccs(in_cc), m_pipe_seq(in_p), m_redirect(in_r) {};
   Ccs(const Ccs& source)
@@ -193,13 +201,14 @@ public:
 };
 
 class Program {
-private:
+public:
+//private:
   // Eventually, we will want to keep track of:
   //    - how many complete commands (separated by ';')
   //    - background execution?
   Ccs *m_ccs;
   bool m_background=false;
-public:
+//public:
   Program(Ccs *in_cc)
     : m_ccs(in_cc) {};
   Program(const Program& source)

@@ -2,22 +2,18 @@
 #include "shell.tab.h"
 #include <cstring>
 #include "lex.yy.h"
+#include "Shell.h"
 
 int main(){
-  yydebug = 1;
-  extern Program *root;
-  std::string instring;
-  std::getline(std::cin,instring);
-  char *str_copy = new char[instring.size()+1];
-  strcpy(str_copy, instring.c_str());
-  /*std::cout << "Input string is:\n'" << in_string << "'" <<std::endl; */
-  YY_BUFFER_STATE bp = yy_scan_string(str_copy);
-  yyparse();
-  root->print();
-  //Program *newroot = new Program(*root);
-  //newroot->print();
-  yy_delete_buffer(bp);
-  delete[] str_copy;
-  delete root;
-  //delete newroot;
+  //yydebug = 1;
+  Shell *sh = new Shell();
+//  bool big_exit;
+  int exit_nana;
+  do {
+  //  big_exit = sh->_exit(); // if exit is executed, this is true; otherwise false
+    exit_nana = sh->run();
+  } while(!sh->shell_exit);
+  delete sh;
+  std::cout<< "Exiting KOSH with code " << exit_nana << ". Goodbye!" <<std::endl;
+  return 0;
 }
