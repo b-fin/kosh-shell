@@ -22,4 +22,4 @@ flexbison:
 	bison -d -v shell.y
 	flex shell.l
 clean:
-	rm -f shell *.0 lex.yy.* shell.output shell.tab.*
+	rm -f shell *.o lex.yy.* shell.output shell.tab.*
