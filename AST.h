@@ -19,6 +19,7 @@ public:
       m_arguments.push_back(arg1);
       m_arg_count++;
       free(in_str);
+      remove_quotes();
     };
   Arguments(const Arguments &source)
     : m_arguments{}, m_arg_count{0} {
@@ -33,6 +34,7 @@ public:
   void add_argument(char *);
   void print() const;
   int get_arg_count() const;
+  void remove_quotes();
 };
 
 
@@ -47,6 +49,7 @@ public:
     : m_varname{}, m_value{} {
       m_varname.assign(in1);
       m_value.assign(in2);
+      remove_quotes();
       free(in1);
       free(in2);
     };
@@ -54,6 +57,7 @@ public:
     : m_varname{source.m_varname}, m_value{source.m_value} {};
   Set& operator=(const Set &source);
   ~Set()=default;
+  void remove_quotes();
   void print() const;
 };
 
@@ -224,6 +228,8 @@ public:
   ~Program();
   void print() const;
   void set_bg();
+  bool has_unexpanded_vars() const;
+  bool ready_to_execute() const;
 };
 
 

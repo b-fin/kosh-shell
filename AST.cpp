@@ -39,6 +39,16 @@ void Arguments::print() const {
 int Arguments::get_arg_count() const {
   return m_arg_count;
 }
+
+void Arguments::remove_quotes() {
+  for (auto x : m_arguments) {
+    if (x.front() == '\"' && x.back() == '\"') {
+      unsigned temp_size = x.size();
+      std::string temp_string = x.substr(1,temp_size-2);
+      x = temp_string;
+    }
+  }
+}
 //////////////////////////////////
 // Set methods ///////////////////
 //////////////////////////////////
@@ -57,6 +67,15 @@ void Set::print() const {
   "\tVarname: " << m_varname << std::endl <<
   "\tValue: " << m_value << std::endl;
   std::cout<< "**** END SET ****\n";
+}
+
+// Self-explanatory
+void Set::remove_quotes() {
+  if (m_value.front() == '\"' && m_value.back() == '\"') {
+    unsigned temp_size = m_value.size();
+    std::string new_string = m_value.substr(1,temp_size-2);
+    m_value = new_string;
+  }
 }
 
 
@@ -276,4 +295,56 @@ void Program::print() const {
 
 void Program::set_bg() {
   m_background = true;
+}
+
+// Sorry this method is a mess.
+// It essentially traverses the tree (in an admittedly clunky fashion) and checks all
+// possible places where an unescaped variable (ie $varname) could be and returns true if
+// it finds any.
+// The possible places are: in a command word, in an argument, in a set clause (varname or value).
+// TODO: have it check redirects as well (we'll potentially be allowing $varname in a redirect eg >$file1)
+bool Program::has_unexpanded_vars() const {
+  Ccs *current_ccs;
+  Pipe_seq *current_pipe;
+  if (m_ccs) {
+    current_ccs = m_ccs;
+  }
+  while (current_ccs != nullptr) {
+    if (current_ccs->m_pipe_seq) {
+      current_pipe = current_ccs->m_pipe_seq;
+      while (current_pipe != nullptr) {
+        // two cases: current_pipe has a set member or does not
+        if (current_pipe->m_command && current_pipe->m_command->m_s_command && current_pipe->m_command->m_s_command->m_set) {
+          // case 1: pipe has a set member. check varname and value for $
+          if (current_pipe->m_command->m_s_command->m_set->m_varname.find('$') != std::string::npos)
+            { return true; }
+            else if (current_pipe->m_command->m_s_command->m_set->m_value.find('$') != std::string::npos)
+            { return true; }
+        } // case 2: pipe does not have a set member
+        else if (current_pipe->m_command->m_s_command) {
+          if (current_pipe->m_command->m_s_command->m_cmd_word.find('$') != std::string::npos)
+            { return true; }
+            // now check the arguments
+          if (current_pipe->m_command->m_s_command->m_arguments) {
+            for (int i=0; i<(current_pipe->m_command->m_s_command->m_arguments->m_arg_count); i++) {
+              if (current_pipe->m_command->m_s_command->m_arguments->m_arguments[i].find('$') != std::string::npos)
+                { return true; }
+            } // end for
+          }
+        }
+        // if none of the above are true, then we advance the current_pipe variable
+        current_pipe = current_pipe->m_pipe_seq;
+      } // end inner while
+    }
+    // time to advance the current_ccs variable
+    current_ccs = current_ccs->m_ccs;
+  } // end outer while
+  // we made it out of all of the ifs and whiles, so there must be no unexpanded vars
+  return false;
+}
+
+bool Program::ready_to_execute() const {
+  if (!has_unexpanded_vars())
+    { return true; }
+  else { return false; }
 }

@@ -35,6 +35,9 @@ public:
   int execute_exit(const S_command*);
   int execute_echo(const S_command*, const Arguments*);
   int execute_set(const S_command*);
+  void print_symbol_table() const;
+  int expand_vars(Program *in_prog);
+  bool try_expand_vars(std::string, std::string&);
 };
 
 #endif
