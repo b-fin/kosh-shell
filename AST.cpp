@@ -124,6 +124,13 @@ void S_command::print() const {
 void S_command::make_set() {
   m_is_set = true;
 }
+/*
+const char* S_command::prepare_cmd_word() const {
+  int temp_size = m_cmd_word.size();
+  const char* temp = new char[temp_size];
+  temp = m_cmd_word.c_str();
+  return temp;
+} */
 
 //////////////////////////////////
 // Command methods ///////////////

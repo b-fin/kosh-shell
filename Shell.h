@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "shell.tab.h"
 #include "lex.yy.h"
+#include <array>
 
 
 class Shell {
@@ -29,6 +30,7 @@ public:
   bool _exit();
   int execute_built_in(S_command *in_com, Arguments *in_arg);
   int execute_external(S_command *in_com, Arguments *in_arg);
+  int execute_external(S_command *in_com);
   int execute_cd(const S_command*, const Arguments*);
   int execute_pwd(const S_command*);
   int execute_source(const S_command*, const Arguments*);
@@ -38,6 +40,7 @@ public:
   void print_symbol_table() const;
   int expand_vars(Program *in_prog);
   bool try_expand_vars(std::string, std::string&);
+  char const** prepare_cmd_args(S_command *in_com, Arguments *in_arg) const;
 };
 
 #endif

@@ -96,6 +96,7 @@ public:
   ~S_command();
   void print() const;
   void make_set();
+  //const char* prepare_cmd_word() const;
 };
 
 

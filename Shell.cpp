@@ -6,6 +6,9 @@
 #include <cassert>
 #include <unistd.h>
 #include <cstring>
+#include <sys/wait.h>
+
+#define KOSH_DEBUG_PRINT true
 
 // Global variable, probably not going to be used
 bool big_exit = 0;
@@ -84,6 +87,9 @@ bool Shell::is_built_in(S_command *in_com) {
         { return true; } else { return false; }
   }
   else {
+    if (KOSH_DEBUG_PRINT) {
+      std::cout<< "WARNING: is_built_in() received an empty S_command node\n";
+    }
     return false;
   }
 }
@@ -127,10 +133,63 @@ int Shell::execute_built_in(S_command *in_com, Arguments *in_arg) {
       return execute_exit(in_com);
     }
   }
+  if (KOSH_DEBUG_PRINT) {
+    std::cout<< "ERROR: something went wrong in execute_built_in()\n";
+  }
   return -1; // something went wrong
 }
 
+// This function is a mammoth, mostly because I couldn't find an elegant way
+// to have the argv array built and returned from another function. 
 int Shell::execute_external(S_command *in_com, Arguments *in_arg) {
+  assert(in_com);
+  // Prepare args
+  int tmp_size = 2;
+
+  if(in_arg) {
+    tmp_size = in_arg->m_arg_count+2;
+  }
+  //char *argv[tmp_size];
+  char **argv = new char*[tmp_size];
+
+  if(in_arg) {
+    for(int i=1; i<=in_arg->m_arg_count; i++) {
+      argv[i] = strdup(in_arg->m_arguments[i-1].c_str()); // free all these
+    }
+  }
+
+  argv[0] = strdup(in_com->m_cmd_word.c_str()); // free this
+  argv[tmp_size-1] = NULL;
+
+  // Actually begin fork-exec sequence
+  pid_t cpid, w;
+  int wstatus;
+
+  cpid = fork();
+  if(cpid == 0) {
+    // we are in the child process
+    if ( execvp(in_com->m_cmd_word.c_str(), const_cast<char *const(*)>(argv)) == -1) {
+      std::cout<< "ERROR: error executing command (exec)\n";
+      return -1;
+    }
+  } else if (cpid < 0) {
+    std::cout<< "ERROR: error executing command (fork)\n";
+    return -1;
+  } else {
+    // parent process
+    do {
+      w = waitpid(cpid,&wstatus, WUNTRACED | WCONTINUED);
+      if (w == -1) {
+        std::cout<< "ERROR: error executing command (wait)\n";
+        return -1;
+      }
+    } while(!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+  }
+  // FREE
+  for(int i=0; i<tmp_size-1; i++) {
+    free(argv[i]);
+  }
+  delete[] argv;
   return 0;
 }
 
@@ -142,7 +201,7 @@ int Shell::execute_cd(const S_command* in_com, const Arguments* in_arg){
     return result;
   }
   if (in_arg->m_arg_count != 1) {
-    std::cout<< "ERROR: cd takes 1 argument\n";
+    std::cout<< "ERROR: cd takes 1 argument, more given\n";
     return -1; // error, too many arguments
   } else {
     std::string cd_arg(in_arg->m_arguments[0]);
@@ -212,9 +271,11 @@ int Shell::execute_set(const S_command* in_com){
 }
 
 void Shell::print_symbol_table() const {
-  std::cout<< "SYMBOL TABLE CONTENTS: " << std::endl;
-  for (auto& x : m_symbol_table) {
-    std::cout<< x.first<< ": "<< x.second << std::endl;
+  if (KOSH_DEBUG_PRINT) {
+    std::cout<< "SYMBOL TABLE CONTENTS: " << std::endl;
+    for (auto& x : m_symbol_table) {
+      std::cout<< x.first<< ": "<< x.second << std::endl;
+    }
   }
 }
 
@@ -225,12 +286,16 @@ int Shell::expand_vars(Program *in_prog) {
   std::string ostring = "";
   if (in_prog->m_ccs) {
     current_ccs = in_prog->m_ccs;
-  } else { std::cout<< "ERROR: No m_ccs node detected\n"; return -1; } // error, no ccs node
+  } else {
+    if(KOSH_DEBUG_PRINT) { std::cout<< "ERROR: No m_ccs node detected\n"; }
+    return -1; } // error, no ccs node
   // Traverse the tree, check for instances of '$' within strings.
   while (current_ccs != nullptr) {
     if (current_ccs->m_pipe_seq) {
       current_pipe = current_ccs->m_pipe_seq;
-    } else { std::cout<< "ERROR: no m_pipe_seq node detected\n"; return -1; } // error, no pipe_seq node
+    } else {
+      if (KOSH_DEBUG_PRINT) { std::cout<< "ERROR: no m_pipe_seq node detected\n"; }
+      return -1; } // error, no pipe_seq node
 
     while (current_pipe != nullptr) {
       // check for set command; if so, check its varname and value fields for '$' and deal with them
@@ -322,6 +387,8 @@ bool Shell::try_expand_vars(std::string in_str, std::string& ostring) {
     }
   }
   // We somehow reached the end of the function, which means something went wrong
-  std::cout << "WARNING: Control reached end of try_expand_vars(i,o) without returning true\n";
+  if (KOSH_DEBUG_PRINT) {
+    std::cout << "WARNING: Control reached end of try_expand_vars(i,o) without returning true\n";
+  }
   return false;
 }
