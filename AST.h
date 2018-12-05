@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "var_expansion.h"
+#include <unordered_map>
 
 
 
@@ -21,7 +23,7 @@ public:
       m_arguments.push_back(arg1);
       m_arg_count++;
       free(in_str);
-      remove_quotes();
+      //remove_quotes();
     };
   Arguments(const Arguments &source)
     : m_arguments{}, m_arg_count{0} {
@@ -38,6 +40,9 @@ public:
   void print() const;
   int get_arg_count() const;
   void remove_quotes();
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 };
 
 
@@ -64,6 +69,9 @@ public:
   ~Set()=default;
   void remove_quotes();
   void print() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 };
 
 class S_command {
@@ -104,7 +112,9 @@ public:
   bool has_set() const { bool ret; (m_set) ? ret=true : ret=false; return ret; }
   bool has_args() const { bool ret; (m_arguments) ? ret=true : ret=false; return ret; }
   void make_set();
-  //const char* prepare_cmd_word() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 };
 
 
@@ -136,6 +146,9 @@ public:
   bool has_c_com() const { bool ret; (m_c_command) ? ret=true : ret=false; return ret; }
   ~Command();
   void print() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 
 };
 
@@ -187,6 +200,9 @@ public:
   bool has_pipe() const { bool ret; (m_pipe_seq) ? ret=true : ret=false; return ret; }
   bool has_comm() const { bool ret; (m_command) ? ret=true : ret=false; return ret; }
   void  print() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 };
 
 class Ccs {
@@ -221,6 +237,9 @@ public:
   bool has_redir() const { bool ret; (m_redirect) ? ret=true : ret=false; return ret; }
   ~Ccs();
   void print() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
+
 };
 
 class Program {
@@ -247,8 +266,9 @@ public:
   void print() const;
   void set_bg();
   bool has_ccs() const { bool ret; (m_ccs) ? ret=true : ret=false; return ret; }
-  bool has_unexpanded_vars() const;
-  bool ready_to_execute() const;
+  void do_nothing() const;
+  bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
+  bool needs_expanding() const;
 };
 
 

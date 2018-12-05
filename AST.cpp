@@ -50,6 +50,34 @@ void Arguments::remove_quotes() {
     }
   }
 }
+
+bool Arguments::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  // for each argument, checks:
+  // 1. can it be expanded?
+  // 2. if so, did the expansion work?
+  for (auto& x : m_arguments) {
+    int position = 0;
+    if (word_can_be_expanded(x)) {
+      if(!word_expand_arg(in_s_t, m_arguments, x, position)) {
+        // variable could not be expanded
+        return false;
+      }
+    }
+    position++;
+  }
+  // we made it here which means all went well (hopefully);
+  std::cout<< "Arguments::expand_vars: made it out :-)\n";
+  return true;
+}
+
+bool Arguments::needs_expanding() const {
+  for (auto x : m_arguments) {
+    if (word_can_be_expanded(x)) {
+      return true;
+    }
+  }
+  return false;
+}
 //////////////////////////////////
 // Set methods ///////////////////
 //////////////////////////////////
@@ -80,6 +108,28 @@ void Set::remove_quotes() {
   }
 }
 
+bool Set::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  int exit_status = true;
+  if (word_can_be_expanded(m_value)) {
+    std::string tmp = word_expand_value(in_s_t, m_value);
+    if (tmp != "") {
+      m_value = tmp;
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  return exit_status;
+}
+
+bool Set::needs_expanding() const {
+  if (word_can_be_expanded(m_value)) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 //////////////////////////////////
 // S_command methods /////////////
@@ -127,13 +177,53 @@ void S_command::print() const {
 void S_command::make_set() {
   m_is_set = true;
 }
-/*
-const char* S_command::prepare_cmd_word() const {
-  int temp_size = m_cmd_word.size();
-  const char* temp = new char[temp_size];
-  temp = m_cmd_word.c_str();
-  return temp;
-} */
+
+// Only return 0 if either:
+// 1. this is a set command AND it expands w/o error, or
+// 2. this is a regular command AND both arguments and cmd_word expand w/o error
+bool S_command::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  if (m_set) {
+    bool exit_status = m_set->expand_vars(in_s_t);
+    return exit_status;
+  }
+  if (m_arguments) {
+    if (!m_arguments->expand_vars(in_s_t)) {
+      // arguments couldn't expand
+      std::cout<< "S_command::expand_vars: arguments couldn't expand\n";
+      return false;
+    }
+  }
+  if (word_can_be_expanded(m_cmd_word)) {
+    std::string tmp = word_expand_value(in_s_t, m_cmd_word);
+    if (tmp != "") {
+      m_cmd_word = tmp;
+      return true;
+    }
+  }
+
+  std::cout<< "S_command::expand_vars: reached end of control\n";
+  return true;
+}
+
+bool S_command::needs_expanding() const {
+  bool exit_status = false;
+  bool arg_exit = false;
+
+  if (m_set) {
+    exit_status = m_set->needs_expanding();
+    return exit_status;
+  }
+  if (m_arguments) {
+    arg_exit = m_arguments->needs_expanding();
+  }
+  if (word_can_be_expanded(m_cmd_word)) {
+    exit_status = true;
+  }
+  if(exit_status || arg_exit) {
+    return true;
+  }
+  return exit_status;
+}
 
 //////////////////////////////////
 // Command methods ///////////////
@@ -172,6 +262,21 @@ void Command::print() const {
   std::cout<< "\t\t\t\t**** END COMMAND ****\n";
 }
 
+bool Command::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  int exit_status = true;
+  if (m_s_command) {
+    exit_status = m_s_command->expand_vars(in_s_t);
+  }
+  return exit_status;
+}
+
+bool Command::needs_expanding() const {
+  bool exit_status = false;
+  if (m_s_command) {
+    exit_status = m_s_command->needs_expanding();
+  }
+  return exit_status;
+}
 //////////////////////////////////
 // Redirect methods //////////////
 //////////////////////////////////
@@ -230,6 +335,21 @@ void Pipe_seq::print() const {
   std::cout<< "\t\t**** END PIPE SEQUENCE ****\n";
 }
 
+bool Pipe_seq::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  int exit_status = true;
+  if (m_command) {
+    exit_status = m_command->expand_vars(in_s_t);
+  }
+  return exit_status;
+}
+
+bool Pipe_seq::needs_expanding() const {
+  bool exit_status = false;
+  if (m_command) {
+    exit_status = m_command->needs_expanding();
+  }
+  return exit_status;
+}
 //////////////////////////////////
 // Ccs methods ///////////////////
 //////////////////////////////////
@@ -277,6 +397,28 @@ void Ccs::print() const {
   std::cout<< "**** END CCS ****\n";
 }
 
+bool Ccs::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  Pipe_seq *cur_pipe = m_pipe_seq;
+  // as before, default exit is bad. only way it can be good is if while loop
+  // enters and changes it to a good one.
+  int exit_status=true;
+  while (cur_pipe != nullptr) {
+    exit_status = cur_pipe->expand_vars(in_s_t);
+    cur_pipe = cur_pipe->m_pipe_seq;
+  }
+  return exit_status;
+}
+
+bool Ccs::needs_expanding() const {
+  bool exit_status = false;
+  Pipe_seq *cur_pipe = m_pipe_seq;
+  while (cur_pipe != nullptr) {
+    exit_status = cur_pipe->needs_expanding();
+    cur_pipe = cur_pipe->m_pipe_seq;
+  }
+  return exit_status;
+}
+
 //////////////////////////////////
 // Program methods ///////////////
 //////////////////////////////////
@@ -311,54 +453,30 @@ void Program::set_bg() {
   m_background = true;
 }
 
-// Sorry this method is a mess.
-// It essentially traverses the tree (in an admittedly clunky fashion) and checks all
-// possible places where an unescaped variable (ie $varname) could be and returns true if
-// it finds any.
-// The possible places are: in a command word, in an argument, in a set clause (varname or value).
-// TODO: have it check redirects as well (we'll potentially be allowing $varname in a redirect eg >$file1)
-bool Program::has_unexpanded_vars() const {
-  Ccs *current_ccs;
-  Pipe_seq *current_pipe;
-  if (m_ccs) {
-    current_ccs = m_ccs;
+bool Program::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
+  // idea: have the ccs while loop in here, just call ccs::expand etc
+  Ccs *cur_ccs = m_ccs;
+  // default bad value; only way it can report good is if the while loop enters
+  // and the other calls go well
+  int exit_status=true;
+  while(cur_ccs != nullptr) {
+    exit_status = cur_ccs->expand_vars(in_s_t);
+    cur_ccs = cur_ccs->m_ccs;
   }
-  while (current_ccs != nullptr) {
-    if (current_ccs->m_pipe_seq) {
-      current_pipe = current_ccs->m_pipe_seq;
-      while (current_pipe != nullptr) {
-        // two cases: current_pipe has a set member or does not
-        if (current_pipe->m_command && current_pipe->m_command->m_s_command && current_pipe->m_command->m_s_command->m_set) {
-          // case 1: pipe has a set member. check varname and value for $
-          if (current_pipe->m_command->m_s_command->m_set->m_varname.find('$') != std::string::npos)
-            { return true; }
-            else if (current_pipe->m_command->m_s_command->m_set->m_value.find('$') != std::string::npos)
-            { return true; }
-        } // case 2: pipe does not have a set member
-        else if (current_pipe->m_command->m_s_command) {
-          if (current_pipe->m_command->m_s_command->m_cmd_word.find('$') != std::string::npos)
-            { return true; }
-            // now check the arguments
-          if (current_pipe->m_command->m_s_command->m_arguments) {
-            for (int i=0; i<(current_pipe->m_command->m_s_command->m_arguments->m_arg_count); i++) {
-              if (current_pipe->m_command->m_s_command->m_arguments->m_arguments[i].find('$') != std::string::npos)
-                { return true; }
-            } // end for
-          }
-        }
-        // if none of the above are true, then we advance the current_pipe variable
-        current_pipe = current_pipe->m_pipe_seq;
-      } // end inner while
-    }
-    // time to advance the current_ccs variable
-    current_ccs = current_ccs->m_ccs;
-  } // end outer while
-  // we made it out of all of the ifs and whiles, so there must be no unexpanded vars
-  return false;
+  return exit_status;
 }
 
-bool Program::ready_to_execute() const {
-  if (!has_unexpanded_vars())
-    { return true; }
-  else { return false; }
+bool Program::needs_expanding() const {
+  // default is 0 because m_ccs might fail
+  bool exit_status = false;
+  Ccs *cur_ccs = m_ccs;
+  while(cur_ccs != nullptr) {
+    exit_status = cur_ccs->needs_expanding();
+    cur_ccs = cur_ccs->m_ccs;
+  }
+  return exit_status;
+}
+
+void Program::do_nothing() const {
+  ;
 }

@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include "shell.tab.h"
 #include "lex.yy.h"
-#include <array>
+#include "var_expansion.h"
 
 
 class Shell {
@@ -37,7 +37,7 @@ public:
   int execute_echo(const S_command&);
   int execute_set(const S_command&);
   void print_symbol_table() const;
-  int expand_vars(Program& in_prog);
+  bool expand_vars(Program& in_prog);
   bool try_expand_vars(std::string, std::string&);
   char const** prepare_cmd_args(S_command& in_com) const;
   std::string search_path_for_file(std::string in_str) const;

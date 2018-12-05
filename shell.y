@@ -12,9 +12,7 @@
 }
 %define parse.trace true
 %parse-param {Program& root}
-%{
 
-%}
 
 %union {
   char *str;
@@ -30,6 +28,7 @@
   Set *set;
   Arguments *args;
 }
+
 %type <prog> program
 %type <complcom> complete_commands
 %type <pipe_s> pipe_sequence
@@ -44,10 +43,25 @@
 %type <str> cmd_word
 
 %token <str> WORD NAME FOR DGREAT SET STRING FROM NEWLINE PIPE SEMICOLON
-%token <str> COLON LESS GREAT EQUAL AMP
+%token <str> COLON LESS GREAT EQUAL AMP SETSTRING
+
 %{
-//Program *root;
+/*
+%destructor { free($$); } <str>
+%destructor { delete($$); } <prog>
+%destructor { delete($$); } <complcom>
+%destructor { delete($$); } <pipe_s>
+%destructor { delete($$); } <redir>
+%destructor { delete($$); } <lst>
+%destructor { delete($$); } <cmd>
+%destructor { delete($$); } <scmd>
+%destructor { delete($$); } <ccmd>
+%destructor { delete($$); } <for_node>
+%destructor { delete($$); } <set>
+%destructor { delete($$); } <args>
+*/
 %}
+
 %%
 
 program           : complete_commands { $$ = new Program($1); root = *$$; delete $$;}
@@ -79,7 +93,7 @@ simple_command    : set_clause { $$ = new S_command($1,nullptr,nullptr); $$->mak
 compound_command  : for_clause { /* stub */ }
                   ;
 set_clause        : SET NAME EQUAL WORD { $$ = new Set($2,$4); free($1); free($3); }
-                  | SET NAME EQUAL STRING { $$ = new Set($2,$4); free($1); free($3); }
+                  | SET NAME EQUAL SETSTRING { $$ = new Set($2,$4); free($1); free($3); }
                   ;
 for_clause        : FOR NAME FROM list COLON simple_command { free($1); free($3); }
                   ;
@@ -91,7 +105,8 @@ redirect          : LESS WORD { $$ = new Redirect($1,$2); }
                   | GREAT WORD { $$ = new Redirect($1,$2); }
                   | DGREAT WORD { $$ = new Redirect($1,$2); }
                   ;
-cmd_word          : WORD { $$ = $1; /* std::cout<< "\t\tcmd_word is: " << $1 << "\n"; */ }
+cmd_word          : WORD { $$ = $1; }
+                  | STRING { $$ = $1; }
                   ;
 list              : list WORD { /* stub */ }
                   | WORD { /* stub */ }

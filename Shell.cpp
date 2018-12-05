@@ -53,17 +53,26 @@ int Shell::run() {
 //  also makes calls to the various sub-execution methods eg execute_cd,
 //  execute_internal.
 int Shell::execute(Program& in_prog) {
-   while (!in_prog.ready_to_execute()) {
-  //  in_prog->escape_chars(); TODO
-    if (expand_vars(in_prog) != 0) { return -1; };
-  //  in_prog->expand_source(); TODO
-  }
-  // in_prog->perform_redirects(); TODO
-  // in_prog->perform_pipes(); TODO
-
   int exit_status = 0;
+
+  bool expanded=true;
+  if (in_prog.needs_expanding()) {
+    expanded = expand_vars(in_prog);
+  }
+  std::cout<< "expanded is: " << expanded << std::endl;
+  if(!expanded) {
+    std::cout<< "EXECUTE: variable expansion failed\n";
+    return -1;
+  }
+
   Ccs *current;
-  if (in_prog.m_ccs) current = in_prog.m_ccs;
+  if (in_prog.m_ccs) {
+    current = in_prog.m_ccs;
+  } else {
+    std::cout<< "EXECUTE: no m_ccs member\n";
+    return -1;
+  }
+
 
   // this while loop runs once during simple execution
   while (current != nullptr) {
@@ -141,40 +150,25 @@ int Shell::execute_external(S_command &in_com) {
   // Actually begin fork-exec sequence
   pid_t cpid, w;
   int wstatus;
-
+  int sh_exit_status=0;
   cpid = fork();
   if(cpid == 0) {
     // we are in the child process
     if ( execvp(in_com.m_cmd_word.c_str(), const_cast<char *const(*)>(argv)) == -1) {
       std::cout<< "ERROR: error executing command (exec)\n";
-      // FREE/DELETE
-      for (int i=0; i<tmp_size; i++) {
-        free(argv[i]);
-      }
-      delete[] argv;
-      return -1;
+      sh_exit_status=-1;
+      exit(-1);
     }
   } else if (cpid < 0) {
     std::cout<< "ERROR: error executing command (fork)\n";
-    // FREE/DELETE
-    for (int i=0; i<tmp_size; i++) {
-      free(argv[i]);
-    }
-    delete[] argv;
-    return -1;
+    sh_exit_status=-1;
   } else {
     // parent process
     do {
       w = waitpid(cpid,&wstatus, WUNTRACED | WCONTINUED);
       if (w == -1) {
         std::cout<< "ERROR: error executing command (wait)\n";
-        // FREE/DELETE
-        for(int i=0; i<tmp_size; i++) {
-          free(argv[i]);
-        }
-        delete[] argv;
-
-        return -1;
+        sh_exit_status = -1;
       }
     } while(!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
   }
@@ -183,7 +177,7 @@ int Shell::execute_external(S_command &in_com) {
     free(argv[i]);
   }
   delete[] argv;
-  return 0;
+  return sh_exit_status;
 }
 
 int Shell::execute_cd(const S_command& in_com){
@@ -356,125 +350,10 @@ void Shell::print_symbol_table() const {
 }
 
 
-
-int Shell::expand_vars(Program& in_prog) {
-  Ccs *current_ccs;
-  Pipe_seq *current_pipe;
-  std::string ostring = "";
-  if (in_prog.has_ccs()) {
-    current_ccs = in_prog.m_ccs;
-  } else {
-    // error, no ccs node
-    if(KOSH_DEBUG_PRINT) { std::cout<< "ERROR: No m_ccs node detected\n"; }
-    return -1;
-  }
-
-  // Traverse the tree, check for instances of '$' within strings.
-  while (current_ccs != nullptr) {
-    if (current_ccs->has_pipe()) {
-      current_pipe = current_ccs->m_pipe_seq;
-    } else {
-      // error, no pipe_seq node
-      if (KOSH_DEBUG_PRINT) { std::cout<< "ERROR: no m_pipe_seq node detected\n"; }
-      return -1;
-    }
-
-    while (current_pipe != nullptr) {
-      //  "if the current pipe's command is a SET command"
-      if (current_pipe->m_command && current_pipe->m_command->m_s_command && current_pipe->m_command->m_s_command->m_set) {
-        // "then, if SET's varname member has a $ in it"
-        if (current_pipe->m_command->m_s_command->m_set->m_varname.find('$') != std::string::npos) {
-          // "then, if we can expand it, do so and return"
-          if (try_expand_vars(current_pipe->m_command->m_s_command->m_set->m_varname, ostring)) {
-            current_pipe->m_command->m_s_command->m_set->m_varname = ostring;
-            return 0;
-          }
-        } // "if SET's value member has a $ in it"
-         else if (current_pipe->m_command->m_s_command->m_set->m_value.find('$') != std::string::npos) {
-          // "if we can expand it, do so and return"
-          if (try_expand_vars(current_pipe->m_command->m_s_command->m_set->m_value, ostring)) {
-            current_pipe->m_command->m_s_command->m_set->m_value = ostring;
-            return 0;
-          }
-        }
-      }
-      // no set command; check command word and arguments for '$' and deal with them
-      if (current_pipe->m_command && current_pipe->m_command->m_s_command) {
-        if (current_pipe->m_command->m_s_command->m_cmd_word.find('$') != std::string::npos) {
-          //std::cout<< "In expand_vars, we are in the third find($) branch\n";
-          if (try_expand_vars(current_pipe->m_command->m_s_command->m_cmd_word, ostring)) {
-            current_pipe->m_command->m_s_command->m_cmd_word = ostring;
-            return 0;
-          }
-        }
-        // now try arguments
-        if (current_pipe->m_command->m_s_command->m_arguments) {
-          for (auto& x : current_pipe->m_command->m_s_command->m_arguments->m_arguments) {
-            if (x.find('$') != std::string::npos) {
-              if (try_expand_vars(x, ostring)) {
-                x = ostring;
-                return 0;
-              }
-            }
-          }
-        }
-      }
-      // we got here, which means no command or argument in this pipe sequence has a '$'.
-      // so, we advance the current_pipe.
-      current_pipe = current_pipe->m_pipe_seq;
-    } // end inner while
-    // advance the current_ccs
-    current_ccs = current_ccs->m_ccs;
-  } // end outer while
-  // we made it out, so there must be an error?
-  std::cout<< "ERROR: Variable not set" <<std::endl;
-  return -1; // Variable likely not set
-}
-
-bool Shell::try_expand_vars(std::string in_str, std::string& ostring) {
-  //std::cout<< "We are in try_expand_vars\n";
-  assert(in_str.find('$') != std::string::npos);
-  int pos = in_str.find('$');
-  // check for bad case: '$' at end of string
-  if (in_str.back() == '$') {
-    std::cout<< "ERROR: '$' detected at end of string " << in_str << std::endl;
-    return false;
-  }
-  // check for good case: '$' at beginning of string
-  if (in_str.front() == '$') {
-    // check if the substring in_str[1:size-1] matches anything in the symbol table
-
-    // temp_string becomes a copy of in_str without the leading '$'
-    std::string temp_string = in_str.substr(1,std::string::npos);
-    // we then go through the symbol table, and try to match the temp_string with
-    // anything in the symbol table. If it matches, we set the out parameter ostring
-    // to the value associated with the key and return true.
-    for (auto& x : m_symbol_table) {
-      if (temp_string == x.first) {
-        ostring = x.second;
-        return true;
-      }
-    }
-  }
-  // middle case: '$' occurs in between the beginning and end of string
-  // this could get hairy: what we want to do is take the string,
-  // get the substring from pos+1 to the end, and check it against the symbol table
-  // keys. if it matches, we append the key's value to the beginning of the old string (up until the $)
-  // we then follow the out-parameter procedure as above
-  std::string temp_string = in_str.substr(pos+1, std::string::npos);
-  std::string temp_prefix = in_str.substr(0,pos);
-  assert(temp_string.size() >= 1); // ensure we have a non-empty temp_string to check
-  for (auto& x : m_symbol_table) {
-    if ( temp_string == x.first) {
-      ostring = temp_prefix + x.second;
-      return true;
-    }
-  }
-  // We somehow reached the end of the function, which means something went wrong
-  if (KOSH_DEBUG_PRINT) {
-    std::cout << "WARNING: Control reached end of try_expand_vars(i,o) without returning true\n";
-  }
-  return false;
+bool Shell::expand_vars(Program& in_prog) {
+  int exit_status;
+  exit_status = in_prog.expand_vars(m_symbol_table);
+  return exit_status;
 }
 
 std::string Shell::search_path_for_file(std::string in_str) const {
