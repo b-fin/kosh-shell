@@ -25,22 +25,24 @@ public:
   // Change destructor if we have dynamically allocated members later
   ~Shell() = default;
   int run();
-  int execute(Program *in_prog);
-  bool is_built_in(S_command *);
+  int execute(Program& in_prog);
+  bool is_built_in(S_command&);
   bool _exit();
-  int execute_built_in(S_command *in_com, Arguments *in_arg);
-  int execute_external(S_command *in_com, Arguments *in_arg);
-  int execute_external(S_command *in_com);
-  int execute_cd(const S_command*, const Arguments*);
-  int execute_pwd(const S_command*);
-  int execute_source(const S_command*, const Arguments*);
-  int execute_exit(const S_command*);
-  int execute_echo(const S_command*, const Arguments*);
-  int execute_set(const S_command*);
+  int execute_built_in(S_command& in_com);
+  int execute_external(S_command& in_com);
+  int execute_cd(const S_command&);
+  int execute_pwd(const S_command&);
+  int execute_source(const S_command&);
+  int execute_exit(const S_command&);
+  int execute_echo(const S_command&);
+  int execute_set(const S_command&);
   void print_symbol_table() const;
-  int expand_vars(Program *in_prog);
+  int expand_vars(Program& in_prog);
   bool try_expand_vars(std::string, std::string&);
-  char const** prepare_cmd_args(S_command *in_com, Arguments *in_arg) const;
+  char const** prepare_cmd_args(S_command& in_com) const;
+  std::string search_path_for_file(std::string in_str) const;
 };
+
+std::vector<std::string> split(const std::string& tobesplit, const std::string delimiter);
 
 #endif

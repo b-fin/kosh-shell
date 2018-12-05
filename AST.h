@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+
+
 class Arguments {
 public:
 //private:
@@ -23,6 +25,7 @@ public:
     };
   Arguments(const Arguments &source)
     : m_arguments{}, m_arg_count{0} {
+      //std::cout<< "ARGUMENTS copy ctor called\n";
       for (int i=0; i<source.m_arg_count; i++) {
         std::string new_arg(source.m_arguments[i]);
         m_arguments.push_back(new_arg);
@@ -54,7 +57,9 @@ public:
       free(in2);
     };
   Set(const Set &source)
-    : m_varname{source.m_varname}, m_value{source.m_value} {};
+    : m_varname{source.m_varname}, m_value{source.m_value} {
+      //std::cout<< "SET copy ctor called\n";
+    };
   Set& operator=(const Set &source);
   ~Set()=default;
   void remove_quotes();
@@ -84,6 +89,7 @@ public:
   // shit
   S_command(const S_command &source)
     : m_set{nullptr}, m_cmd_word{source.m_cmd_word}, m_arguments{nullptr} {
+      //std::cout<< "S_COMMAND copy ctor called\n";
       if (source.m_set) {
         m_set = new Set(*source.m_set);
         m_is_set = true;
@@ -95,6 +101,8 @@ public:
   S_command& operator=(const S_command &source);
   ~S_command();
   void print() const;
+  bool has_set() const { bool ret; (m_set) ? ret=true : ret=false; return ret; }
+  bool has_args() const { bool ret; (m_arguments) ? ret=true : ret=false; return ret; }
   void make_set();
   //const char* prepare_cmd_word() const;
 };
@@ -119,10 +127,13 @@ public:
     : m_s_command(in_s), m_c_command(in_c) {};
   Command(const Command& source)
     : m_s_command{nullptr}, m_c_command{nullptr} {
+      //std::cout<< "COMMAND copy ctor called\n";
       if (source.m_s_command) { m_s_command = new S_command(*source.m_s_command); }
       else if (source.m_c_command) { m_c_command = new C_command(*source.m_c_command); }
     };
   Command& operator=(const Command& source);
+  bool has_s_com() const { bool ret; (m_s_command) ? ret=true : ret=false; return ret; }
+  bool has_c_com() const { bool ret; (m_c_command) ? ret=true : ret=false; return ret; }
   ~Command();
   void print() const;
 
@@ -162,6 +173,7 @@ public:
     : m_pipe_seq(in_p), m_command(in_c) {};
   Pipe_seq(const Pipe_seq& source)
     : m_pipe_seq{nullptr}, m_command{nullptr} {
+      //std::cout<< "PIPE_SEQ copy ctor called\n";
       if (source.m_pipe_seq) {
         m_pipe_seq = new Pipe_seq(*source.m_pipe_seq);
       }
@@ -172,6 +184,8 @@ public:
   Pipe_seq& operator=(const Pipe_seq& source);
   void add_pipe_seq(Pipe_seq *source) { m_pipe_seq = source; }
   ~Pipe_seq();
+  bool has_pipe() const { bool ret; (m_pipe_seq) ? ret=true : ret=false; return ret; }
+  bool has_comm() const { bool ret; (m_command) ? ret=true : ret=false; return ret; }
   void  print() const;
 };
 
@@ -189,6 +203,7 @@ public:
     : m_ccs(in_cc), m_pipe_seq(in_p), m_redirect(in_r) {};
   Ccs(const Ccs& source)
     : m_ccs{nullptr}, m_pipe_seq{nullptr}, m_redirect{nullptr} {
+      //std::cout<< "CCS copy ctor called\n";
       if (source.m_ccs) {
         m_ccs = new Ccs(*source.m_ccs);
       }
@@ -201,23 +216,25 @@ public:
     };
   Ccs& operator=(const Ccs& source);
   void add_ccs(Ccs *source) { m_ccs = source; };
+  bool has_ccs() const { bool ret; (m_ccs) ? ret=true : ret=false; return ret; }
+  bool has_pipe() const { bool ret; (m_pipe_seq) ? ret=true : ret=false; return ret; }
+  bool has_redir() const { bool ret; (m_redirect) ? ret=true : ret=false; return ret; }
   ~Ccs();
   void print() const;
 };
 
 class Program {
 public:
-//private:
-  // Eventually, we will want to keep track of:
-  //    - how many complete commands (separated by ';')
-  //    - background execution?
   Ccs *m_ccs;
   bool m_background=false;
 //public:
   Program(Ccs *in_cc)
     : m_ccs(in_cc) {};
+  Program()
+    : m_ccs(nullptr), m_background(false) {};
   Program(const Program& source)
     : m_ccs{nullptr} {
+      //{std::cout<<"PROGRAM copy ctor called\n";}
       if (source.m_ccs) {
         m_ccs = new Ccs(*source.m_ccs);
       }
@@ -229,6 +246,7 @@ public:
   ~Program();
   void print() const;
   void set_bg();
+  bool has_ccs() const { bool ret; (m_ccs) ? ret=true : ret=false; return ret; }
   bool has_unexpanded_vars() const;
   bool ready_to_execute() const;
 };

@@ -1,19 +1,20 @@
 %option noyywrap
 %option header-file="lex.yy.h"
-%{
+%top{
 #include "shell.tab.h"
+#include "AST.h"
 #include <iostream>
 #include <string>
 #include <string.h>
 /* NEW LEXER FILE 11/14/18 */
-%}
+}
 %x FOR_SET
 %%
 [ \t]+ /* eat tabs and spaces (but not newlines) */;
 \n { return NEWLINE; }
 "for" { yylval.str = strdup(yytext); BEGIN FOR_SET; return FOR; }
 "set" { yylval.str = strdup(yytext); BEGIN FOR_SET; return SET; }
-"from" { yylval.str = strdup(yytext); return FROM; }
+<FOR_SET>"from" { yylval.str = strdup(yytext); return FROM; }
 ">>" { yylval.str = strdup(yytext); return DGREAT; }
 ";" { yylval.str = strdup(yytext); return SEMICOLON; }
 "|" { yylval.str = strdup(yytext); return PIPE; }
@@ -27,7 +28,8 @@
 \"[a-zA-Z 0-9]+\" { yylval.str = strdup(yytext); return STRING; /* for strings in SET statements */ }
 %%
 
-void yyerror(std::string s){
+void yyerror(Program& r, std::string s){
   std::cout << "Error detected: " << s  << ": " << "'" << yytext << "'" << std::endl;
+  r.print();
 
   }

@@ -2,16 +2,18 @@
 /* 11/29/18 */
 %code requires {
   #include "AST.h"
+  #define YYDEBUG 1
+  #include <iostream>
+  #include <string>
+  extern void yyerror(Program &, std::string);
+  extern int yylex();
+  //extern int yyparse(Program &);
+  //int option_count = 0;
 }
 %define parse.trace true
+%parse-param {Program& root}
 %{
-#define YYDEBUG 1
-#include <iostream>
-#include <string>
-extern void yyerror(std::string);
-extern int yylex();
-extern int yyparse();
-int option_count = 0;
+
 %}
 
 %union {
@@ -44,12 +46,12 @@ int option_count = 0;
 %token <str> WORD NAME FOR DGREAT SET STRING FROM NEWLINE PIPE SEMICOLON
 %token <str> COLON LESS GREAT EQUAL AMP
 %{
-Program *root;
+//Program *root;
 %}
 %%
 
-program           : complete_commands { $$ = new Program($1); root = $$;  }
-                  | complete_commands AMP { $$ = new Program($1); $$ = root; $$->set_bg(); free($2); }
+program           : complete_commands { $$ = new Program($1); root = *$$; delete $$;}
+                  | complete_commands AMP { $$ = new Program($1); root = *$$; $$->set_bg(); free($2); delete $$; }
                   ;
 complete_commands : complete_commands SEMICOLON pipe_sequence redirect
                         { Ccs *temp = new Ccs(nullptr,$3,$4); free($2);

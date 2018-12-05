@@ -7,6 +7,7 @@
 //////////////////////////////////
 
 Arguments& Arguments::operator=(const Arguments &source) {
+  //std::cout<< "ARGUMENTS assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -54,6 +55,7 @@ void Arguments::remove_quotes() {
 //////////////////////////////////
 
 Set& Set::operator=(const Set& source) {
+  //std::cout<< "SET assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -84,6 +86,7 @@ void Set::remove_quotes() {
 //////////////////////////////////
 
 S_command& S_command::operator=(const S_command& source) {
+  //std::cout<< "S_COMMAND assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -137,6 +140,7 @@ const char* S_command::prepare_cmd_word() const {
 //////////////////////////////////
 
 Command& Command::operator=(const Command& source) {
+  //std::cout<< "COMMAND assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -193,6 +197,7 @@ void Redirect::print() const {
 //////////////////////////////////
 
 Pipe_seq& Pipe_seq::operator=(const Pipe_seq& source) {
+  //std::cout<< "PIPE_SEQ assignment op called\n";
   if (this == &source){
     return *this;
   }
@@ -230,6 +235,7 @@ void Pipe_seq::print() const {
 //////////////////////////////////
 
 Ccs& Ccs::operator=(const Ccs& source) {
+  //std::cout<< "CCS assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -276,6 +282,7 @@ void Ccs::print() const {
 //////////////////////////////////
 
 Program& Program::operator=(const Program& source) {
+  //std::cout<< "PROGRAM assignment op called\n";
   if (this == &source) {
     return *this;
   }
