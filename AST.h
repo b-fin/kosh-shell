@@ -13,21 +13,20 @@
 
 class Arguments {
 public:
-//private:
+  // Data members
   std::vector<std::string> m_arguments;
   int m_arg_count;
-//public:
+
+  // Methods
   Arguments(char *in_str)
     : m_arguments{}, m_arg_count{0} {
       std::string arg1(in_str);
       m_arguments.push_back(arg1);
       m_arg_count++;
       free(in_str);
-      //remove_quotes();
     };
   Arguments(const Arguments &source)
     : m_arguments{}, m_arg_count{0} {
-      //std::cout<< "ARGUMENTS copy ctor called\n";
       for (int i=0; i<source.m_arg_count; i++) {
         std::string new_arg(source.m_arguments[i]);
         m_arguments.push_back(new_arg);
@@ -39,7 +38,8 @@ public:
   void add_argument(char *);
   void print() const;
   int get_arg_count() const;
-  void remove_quotes();
+  // Unused function for now
+  void remove_quotes()=delete;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;
 
@@ -48,26 +48,23 @@ public:
 
 class Set {
 public:
-//private:
+  // Data members
   std::string m_varname;
   std::string m_value;
-
-//public:
+  // Methods
   Set(char *in1, char *in2)
     : m_varname{}, m_value{} {
       m_varname.assign(in1);
       m_value.assign(in2);
-      remove_quotes();
       free(in1);
       free(in2);
     };
   Set(const Set &source)
-    : m_varname{source.m_varname}, m_value{source.m_value} {
-      //std::cout<< "SET copy ctor called\n";
-    };
+    : m_varname{source.m_varname}, m_value{source.m_value} {};
   Set& operator=(const Set &source);
   ~Set()=default;
-  void remove_quotes();
+  // Unused function for now
+  void remove_quotes()=delete;
   void print() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;
@@ -76,13 +73,13 @@ public:
 
 class S_command {
 public:
-  //private:
+  // Data members
   bool m_is_set = false;
   Set *m_set;
   std::string m_cmd_word;
   Arguments *m_arguments;
 
-//public:
+  // Methods
   S_command(Set *in_set, char *in_cw, Arguments *in_arg)
     : m_set(in_set), m_cmd_word{}, m_arguments(in_arg) {
       if (!in_cw) {
@@ -93,11 +90,8 @@ public:
         free(in_cw);
       }
     };
-  // The destructor deletes the member pointers; so we should allocate
-  // shit
   S_command(const S_command &source)
     : m_set{nullptr}, m_cmd_word{source.m_cmd_word}, m_arguments{nullptr} {
-      //std::cout<< "S_COMMAND copy ctor called\n";
       if (source.m_set) {
         m_set = new Set(*source.m_set);
         m_is_set = true;
@@ -109,11 +103,10 @@ public:
   S_command& operator=(const S_command &source);
   ~S_command();
   void print() const;
-  bool has_set() const { bool ret; (m_set) ? ret=true : ret=false; return ret; }
-  bool has_args() const { bool ret; (m_arguments) ? ret=true : ret=false; return ret; }
-  void make_set();
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;
+  bool cmd_word_needs_expanding() const;
+  bool args_need_expanding() const;
 
 };
 
@@ -123,16 +116,16 @@ class For {
 };
 
 class C_command {
-  // stub
+  // stub (planned to support `for` loops)
 };
 
 class Command {
 public:
-//private:
-  // one of these must be nullptr
+  // Date Members
+  // Note: one of these must be nullptr (cannot have both at once)
   S_command *m_s_command;
   C_command *m_c_command;
-//public:
+  // Methods
   Command(S_command* in_s, C_command* in_c)
     : m_s_command(in_s), m_c_command(in_c) {};
   Command(const Command& source)
@@ -142,8 +135,6 @@ public:
       else if (source.m_c_command) { m_c_command = new C_command(*source.m_c_command); }
     };
   Command& operator=(const Command& source);
-  bool has_s_com() const { bool ret; (m_s_command) ? ret=true : ret=false; return ret; }
-  bool has_c_com() const { bool ret; (m_c_command) ? ret=true : ret=false; return ret; }
   ~Command();
   void print() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
@@ -153,15 +144,15 @@ public:
 };
 
 class List {
-  //stub
+  //stub (also for `for` loops)
 };
 
 class Redirect {
 public:
-//private:
+  // Date members
   std::string m_type;
   std::string m_filename;
-//public:
+  // Methods
   Redirect(char *in1, char *in2)
     : m_type{}, m_filename{} {
       m_type.assign(in1);
@@ -178,15 +169,14 @@ public:
 
 class Pipe_seq {
 public:
-//private:
+  // Data members
   Pipe_seq *m_pipe_seq;
   Command *m_command;
-//public:
+  // Methods
   Pipe_seq(Pipe_seq *in_p, Command *in_c)
     : m_pipe_seq(in_p), m_command(in_c) {};
   Pipe_seq(const Pipe_seq& source)
     : m_pipe_seq{nullptr}, m_command{nullptr} {
-      //std::cout<< "PIPE_SEQ copy ctor called\n";
       if (source.m_pipe_seq) {
         m_pipe_seq = new Pipe_seq(*source.m_pipe_seq);
       }
@@ -195,10 +185,9 @@ public:
       }
     };
   Pipe_seq& operator=(const Pipe_seq& source);
+  // for use in shell.y
   void add_pipe_seq(Pipe_seq *source) { m_pipe_seq = source; }
   ~Pipe_seq();
-  bool has_pipe() const { bool ret; (m_pipe_seq) ? ret=true : ret=false; return ret; }
-  bool has_comm() const { bool ret; (m_command) ? ret=true : ret=false; return ret; }
   void  print() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;
@@ -206,20 +195,19 @@ public:
 };
 
 class Ccs {
-//private:
 public:
+  // Date members
   // Eventually, we will want to keep track of:
   //   - how many redirects, of what kind, and where
   //   - how many pipes and where
   Ccs *m_ccs;
   Pipe_seq *m_pipe_seq;
   Redirect *m_redirect;
-//public:
+  // Methods
   Ccs(Ccs *in_cc, Pipe_seq *in_p, Redirect *in_r)
     : m_ccs(in_cc), m_pipe_seq(in_p), m_redirect(in_r) {};
   Ccs(const Ccs& source)
     : m_ccs{nullptr}, m_pipe_seq{nullptr}, m_redirect{nullptr} {
-      //std::cout<< "CCS copy ctor called\n";
       if (source.m_ccs) {
         m_ccs = new Ccs(*source.m_ccs);
       }
@@ -231,10 +219,8 @@ public:
       }
     };
   Ccs& operator=(const Ccs& source);
+  // for use in shell.y
   void add_ccs(Ccs *source) { m_ccs = source; };
-  bool has_ccs() const { bool ret; (m_ccs) ? ret=true : ret=false; return ret; }
-  bool has_pipe() const { bool ret; (m_pipe_seq) ? ret=true : ret=false; return ret; }
-  bool has_redir() const { bool ret; (m_redirect) ? ret=true : ret=false; return ret; }
   ~Ccs();
   void print() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
@@ -244,16 +230,16 @@ public:
 
 class Program {
 public:
+  // Data members
   Ccs *m_ccs;
   bool m_background=false;
-//public:
+  // Methods
   Program(Ccs *in_cc)
     : m_ccs(in_cc) {};
   Program()
     : m_ccs(nullptr), m_background(false) {};
   Program(const Program& source)
     : m_ccs{nullptr} {
-      //{std::cout<<"PROGRAM copy ctor called\n";}
       if (source.m_ccs) {
         m_ccs = new Ccs(*source.m_ccs);
       }
@@ -264,8 +250,7 @@ public:
   Program& operator=(const Program& source);
   ~Program();
   void print() const;
-  void set_bg();
-  bool has_ccs() const { bool ret; (m_ccs) ? ret=true : ret=false; return ret; }
+  // Useless function for shell.l 
   void do_nothing() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;

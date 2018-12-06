@@ -17,17 +17,30 @@
 class Shell {
 private:
   std::unordered_map<std::string, std::string> m_symbol_table;
-  // whatever else we'll need during the running of the program
 public:
+  // Good idea from BK
+  enum ExecStatus {
+    // should never be returned
+    EXEC_IN_PROG = -1,
+    EXEC_SUCCESS = 0,
+    EXEC_FAIL,
+    // cmd_word does not match
+    EXEC_ERR_CMD,
+    // error regarding arguments
+    EXEC_ERR_ARG,
+    EXEC_ERR_VAR_EXP,
+    EXEC_ERR_MISSING_NODE,
+    EXEC_ERR_OTHER
+  };
+
   bool shell_exit = false;
   Shell()
     : m_symbol_table{} {};
-  // Change destructor if we have dynamically allocated members later
+  // Default destructor until we have dynamically allocated data to delete
   ~Shell() = default;
   int run();
   int execute(Program& in_prog);
   bool is_built_in(S_command&);
-  bool _exit();
   int execute_built_in(S_command& in_com);
   int execute_external(S_command& in_com);
   int execute_cd(const S_command&);
@@ -38,8 +51,6 @@ public:
   int execute_set(const S_command&);
   void print_symbol_table() const;
   bool expand_vars(Program& in_prog);
-  bool try_expand_vars(std::string, std::string&);
-  char const** prepare_cmd_args(S_command& in_com) const;
   std::string search_path_for_file(std::string in_str) const;
 };
 

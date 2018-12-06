@@ -7,7 +7,6 @@
 //////////////////////////////////
 
 Arguments& Arguments::operator=(const Arguments &source) {
-  //std::cout<< "ARGUMENTS assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -29,6 +28,7 @@ void Arguments::add_argument(char *in_str) {
   free(in_str);
 }
 
+// Debug method
 void Arguments::print() const {
   std::cout<< "\t\t\t\t\t\t**** ARGUMENTS ****\n";
   for (int i=0; i<m_arg_count; i++) {
@@ -41,6 +41,8 @@ int Arguments::get_arg_count() const {
   return m_arg_count;
 }
 
+// Deleted for now //
+/********************************************************************
 void Arguments::remove_quotes() {
   for (auto x : m_arguments) {
     if (x.front() == '\"' && x.back() == '\"') {
@@ -50,40 +52,48 @@ void Arguments::remove_quotes() {
     }
   }
 }
+************************************************************************/
 
+// Takes one parameter, the Shell symbol table (ugly type name)
+// Returns:
+//  - true if all arguments that need expanding were successfully expanded.
+//  - false otherwise.
 bool Arguments::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
-  // for each argument, checks:
-  // 1. can it be expanded?
-  // 2. if so, did the expansion work?
+  bool status = false;
+  int position = 0;
   for (auto& x : m_arguments) {
-    int position = 0;
     if (word_can_be_expanded(x)) {
       if(!word_expand_arg(in_s_t, m_arguments, x, position)) {
         // variable could not be expanded
-        return false;
-      }
+        status = false;
+        std::cout<< "Error: in Arguments::expand_vars(), argument that could be expanded was not\n";
+        break;
+      } else {
+          status = true;
+        }
     }
     position++;
   }
-  // we made it here which means all went well (hopefully);
-  std::cout<< "Arguments::expand_vars: made it out :-)\n";
-  return true;
+  return status;
 }
 
+// Returns:
+//  - true if any argument needs expanding i.e. contains a '$'
+//  - false otherwise
 bool Arguments::needs_expanding() const {
+  bool status = false;
   for (auto x : m_arguments) {
     if (word_can_be_expanded(x)) {
-      return true;
+      status = true;
     }
   }
-  return false;
+  return status;
 }
 //////////////////////////////////
 // Set methods ///////////////////
 //////////////////////////////////
 
 Set& Set::operator=(const Set& source) {
-  //std::cout<< "SET assignment op called\n";
   if (this == &source) {
     return *this;
   }
@@ -92,6 +102,7 @@ Set& Set::operator=(const Set& source) {
   return *this;
 }
 
+// Debug method
 void Set::print() const {
   std::cout<< "**** SET ****\n"<<
   "\tVarname: " << m_varname << std::endl <<
@@ -99,7 +110,8 @@ void Set::print() const {
   std::cout<< "**** END SET ****\n";
 }
 
-// Self-explanatory
+// Deleted for now //
+/*************************************************
 void Set::remove_quotes() {
   if (m_value.front() == '\"' && m_value.back() == '\"') {
     unsigned temp_size = m_value.size();
@@ -107,18 +119,23 @@ void Set::remove_quotes() {
     m_value = new_string;
   }
 }
+**************************************************/
 
+// First parameter is Shell symbol table.
+// Returns true if value was expanded successfully, false otherwise.
 bool Set::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
-  int exit_status = true;
+  int exit_status = false;
   if (word_can_be_expanded(m_value)) {
     std::string tmp = word_expand_value(in_s_t, m_value);
     if (tmp != "") {
       m_value = tmp;
-      return true;
-    }
-    else {
-      return false;
-    }
+      exit_status = true;
+    } else {
+        std::cout<< "ERROR: in Set::expand_vars, word_expand_value returned false\n";
+        exit_status = false;
+      }
+  } else {
+    std::cout<< "ERROR: in Set::expand_vars, word_can_be_expanded() returned false\n";
   }
   return exit_status;
 }
@@ -162,6 +179,7 @@ S_command::~S_command() {
   if (m_arguments) { delete m_arguments; }
 }
 
+// Debug method
 void S_command::print() const {
   std::cout<< "\n\t\t\t\t\t**** S_COMMAND ****\n" <<
   "\t\t\t\t\tm_is_set: " << m_is_set << "\n" <<
@@ -174,55 +192,77 @@ void S_command::print() const {
 
 }
 
-void S_command::make_set() {
-  m_is_set = true;
-}
-
-// Only return 0 if either:
-// 1. this is a set command AND it expands w/o error, or
-// 2. this is a regular command AND both arguments and cmd_word expand w/o error
+// Returns true if words that need to be expanded were expanded successfully
 bool S_command::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
-  if (m_set) {
-    bool exit_status = m_set->expand_vars(in_s_t);
-    return exit_status;
-  }
-  if (m_arguments) {
-    if (!m_arguments->expand_vars(in_s_t)) {
-      // arguments couldn't expand
-      std::cout<< "S_command::expand_vars: arguments couldn't expand\n";
-      return false;
-    }
-  }
-  if (word_can_be_expanded(m_cmd_word)) {
-    std::string tmp = word_expand_value(in_s_t, m_cmd_word);
-    if (tmp != "") {
-      m_cmd_word = tmp;
-      return true;
-    }
-  }
+  bool status;
+  bool args_worked;
+  bool cmd_worked;
 
-  std::cout<< "S_command::expand_vars: reached end of control\n";
-  return true;
+  if (m_set) {
+    status = m_set->expand_vars(in_s_t);
+  } else {
+      // first, check if both args and cmdword need expanding, and
+      // have status be true ONLY if both expand successfully.
+      if (cmd_word_needs_expanding() && args_need_expanding()) {
+        std::string tmp = word_expand_value(in_s_t,m_cmd_word);
+        if (tmp == "") {
+          cmd_worked = false;
+        } else {
+          cmd_worked = true;
+          m_cmd_word = tmp;
+        }
+        args_worked = m_arguments->expand_vars(in_s_t);
+        status = args_worked && cmd_worked;
+      } else {
+          // either cmd_word needs expanding or args do. find out which one
+          // and expand it.
+          if (cmd_word_needs_expanding()) {
+            std::string tmp = word_expand_value(in_s_t,m_cmd_word);
+            if (tmp == "") {
+              status = false;
+            } else {
+              status = true;
+              m_cmd_word = tmp;
+            }
+          } else if (args_need_expanding()) {
+              status = m_arguments->expand_vars(in_s_t);
+          } else {
+              // we shouldn't get here so something went wrong.
+              std::cout<< "ERROR: in S_command::expand_vars(), we got to the catch-all else\n";
+              status = false;
+          }
+        }
+  }
+  return status;
 }
 
-bool S_command::needs_expanding() const {
-  bool exit_status = false;
-  bool arg_exit = false;
 
+// Returns true if either:
+// 1. m_set exists and needs expanding or
+// 2. either cmd_word needs expanding or arguments need expanding
+bool S_command::needs_expanding() const {
+  bool status;
   if (m_set) {
-    exit_status = m_set->needs_expanding();
-    return exit_status;
+    status = m_set->needs_expanding();
+  } else {
+      // args_need_expanding checks for m_arguments so we don't have to
+      if(args_need_expanding() || cmd_word_needs_expanding()) {
+        status = true;
+      } else {
+          status = false;
+      }
   }
-  if (m_arguments) {
-    arg_exit = m_arguments->needs_expanding();
-  }
-  if (word_can_be_expanded(m_cmd_word)) {
-    exit_status = true;
-  }
-  if(exit_status || arg_exit) {
-    return true;
-  }
-  return exit_status;
+  return status;
+}
+
+bool S_command::cmd_word_needs_expanding() const {
+  return (word_can_be_expanded(m_cmd_word));
+}
+
+bool S_command::args_need_expanding() const {
+  bool status;
+  (m_arguments) ? status=m_arguments->needs_expanding() : status=false;
+  return status;
 }
 
 //////////////////////////////////
@@ -449,9 +489,6 @@ void Program::print() const {
   std::cout<< "**** END PROGRAM ****\n";
 }
 
-void Program::set_bg() {
-  m_background = true;
-}
 
 bool Program::expand_vars(const std::unordered_map<std::string,std::string>& in_s_t) {
   // idea: have the ccs while loop in here, just call ccs::expand etc
