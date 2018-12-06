@@ -72,11 +72,17 @@ These contain the declaration and definition, respectively, of the Shell class. 
 These contain the declaration and definition, respectively, of the AST class, which I like to visualize as such:  
 ![alt text][AST]
 
-[AST]: https://github.com/b-fin/kosh-shell/blob/master/AST.png "AST"
+[AST]: https://github.com/b-fin/kosh-shell/blob/master/AST.png "AST"  
+
+The major methods in the AST class are (as of now) the constructors/destructors and the `expand_vars` methods, which attempt to expand any member strings with values from Shell's symbol table member. 
 
 ## Design choices
-
-## Design timeline 
+Before starting this project, I had very little idea of how a shell like BASH worked, how to manipulate the Linux environment with C++, or even how most of C++ worked. Once I had a handle on things, I initially started the development process by trying to make a POSIX-compliant shell, which immediately turned out to be a bad idea. I therefore made the following simplifications for myself:
+ * KOSH will be sensitive to whitespace in `set varname = value` commands. 
+ * If possible, KOSH will not handle events asynchronously. (Exception is with the `fork()` and `exec()` maneuver found in `Shell::execute_external()`.
+ * Nested constructs are forbidden, for example in `$(...)` constructs. 
+ * 
+## Development timeline 
 
 ## Limitations / Known errors
 
