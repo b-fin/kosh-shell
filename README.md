@@ -55,7 +55,7 @@ To exit KOSH, type:
 `exit`.
 
 ## Source code overview 
-The code is comprised the following files:  
+The code is comprised of the following files:  
 * Shell.h / Shell.cpp 
 * AST.h / AST.cpp
 * main.cpp
