@@ -12,7 +12,7 @@
     * `exit`
     * `echo`
 * Variables: **done**
-    * Users should be able to set their own variables with `set varname = value` (see Design Choices below)
+    * Users should be able to set their own variables with `set varname = value` 
 * Executing external commands and executables, eg `./shell`, `bin/ls`.  **done**
 * Informative error messages and failure conditions. 
 ### Advanced Functionality:
@@ -29,7 +29,7 @@
 * Support for looping over lists: **not done**
 	* ```for varname from list: statements```
 ## Overview / Features
-
+### #TODO
 
 ## Instructions for building / running KOSH
 ### Required software
@@ -55,7 +55,7 @@ To exit KOSH, type:
 `exit`.
 
 ## Source code overview 
-The code is largely contained in the following files:  
+The code is comprised the following files:  
 * Shell.h / Shell.cpp 
 * AST.h / AST.cpp
 * main.cpp
@@ -77,27 +77,77 @@ These contain the declaration and definition, respectively, of the AST class, wh
 The major methods in the AST class are (as of now) the constructors/destructors and the `expand_vars` methods, which attempt to expand any member strings with values from Shell's symbol table member. 
 
 ## Design choices
-Before starting this project, I had very little idea of how a shell like BASH worked, how to manipulate the Linux environment with C++, or even how most of C++ worked. Once I had a handle on things, I initially started the development process by trying to make a POSIX-compliant shell, which immediately turned out to be a bad idea. I therefore made the following simplifications for myself:
+Before starting this project, I had very little idea of how a shell like BASH worked, how to manipulate the Linux environment with C++, or even how most of C++ worked. Once I had a handle on things, I initially started the development process by trying to make a POSIX-compliant shell, which immediately turned out to be a bad idea. I then made the following simplifications for myself (though these are subject to change as I continue working on the shell):
  * KOSH will be sensitive to whitespace in `set varname = value` commands. 
- * If possible, KOSH will not handle events asynchronously. (Exception is with the `fork()` and `exec()` maneuver found in `Shell::execute_external()`.
+ * If possible, KOSH will not handle events asynchronously. (An exception is with the `fork()` and `exec()` maneuver found in `Shell::execute_external()`).
  * Nested constructs are forbidden, for example in `$(...)` constructs. 
- * 
-## Development timeline 
+ * Redirections to/from files may only occur at the end of a command (not before).
+ 
+For the grammar, I based it largely on that specified by POSIX (since it was my starting point for learning shell operation), making accommodations for KOSH-specific functionality (for instance, we have no need for `&&` or `||` constructs, but we do have a particular `set` syntax).  
 
-## Limitations / Known errors
+For the program itself, it largely evolved from my knowledge of Flex/Bison: I knew the program would need to parse input and that an effective way of operating on that input is to create an AST, so I started with the lexer and parser and based the AST on that.   
+Of note about the KOSH AST interface is that each kind of node is a separate class, rather than a level in a hierarchy of classes as is typical. This choice was made largely because I had limited time to (re)learn C++ for this project, so I chose to focus on the aspects of the language I thought would be most immediately useful and simultaneously simple to implement, and unfortunately class inheritance was not one of those for me (whether this was a reasonable decision is entirely debatable). In addition, the relatively low number of distinct grammatical elements made it feasible to implement each as a separate class.  
+In an early version of the project, I had the `execute` functionality embedded within the AST itself, which turned out to be incredibly unwieldy, so it was implemented in the Shell interface instead.
 
-## Personal notes
+The Shell interface wasn't designed so much as pieced together based on what I needed to work next. First it was running `cd`, then it was `echo`, then the rest of the built-ins, and then I added the symbol table to accommodate variables, then external commands. 
 
-## References 
+On the whole, my code uses relatively little of the "advanced" facilities that C++ provides, such as templates or class hierarchies. This was partly a deliberate decision and partly a consequence of limited time and resources. I did, however, strive to make ample use of the STL; the `std::string` class forms the backbone of most of my text processing, and the `std::unordered_map` made the symbol table implementation a breeze. 
 
-## Development notes: 
-As of *November 19, 2018*, I have the following modules in working order or in progress:
-* AST interface/implementation:
-	* This is going to be the structure that Bison will build up and evaluate during its parse.
-	* I have a class each for Arguments, for Commands, and for Programs (working with simplified grammar).
-* shell.y:
-	* This is the Bison grammar file; I am currently working with a simplified version of the grammar as I get the AST and various modules in working order. As I build up the modules, the grammar will be fleshed out to handle the full functionality.
-* shell.l:
-	* This is the Flex token file; it's pretty barebones but it works. 
-* main.c:
-	* This is a simple main file that sets up the `YY_BUFFER_STATE`	to point at stdin, then takes in a string, and then parses it using Bison (which also evaluates it), repeating this is in a loop until `exit` is received.
+Exception handling is absent; I learned how it worked but didn't find the time to implement it, though I may decide to add it in as the code becomes more fleshed out.    
+
+A note on the design of my classes: all class data is currently public. I know this is (very) bad form, this was meant to be a temporary decision to speed the development process and will be reverted shortly.
+## Development Timeline 
+I spent the period of time from early October to early November in what I call the "book phase": I researched how shells operate, compiler design, studied C++ textbooks and wrote small programs, read the documentation and practiced using the tools I would need for the project (Flex, Bison, GCC, GNU make), and studied Linux programming.
+
+From early to mid November was the "design phase", where I laid out more or less what I actually needed for the KOSH project; the first versions of the program were made in this time. 
+
+From mid-late November to early December was the "implementation phase", where the bulk of the current source code was produced. 
+## Limitations / Known errors (WIP)
+I'll try to keep this updated as I continue adding features to KOSH.
+
+As of December 5th, 2018:
+ * No pipes, redirections, etc. 
+ * The `;` operator works in the following form: `command1 ; command2`. I haven't officially started implementing the `;` operator yet so this isn't really a bug as much as a half-feature for now.
+ * At the `make` command, the compiler offers this complaint (it seems out of my control, but I'm sure there's some Flex/Bison hackery I could throw together when I have time):  
+ 	>  lex.yy.c:1225:17: warning: ‘void yyunput(int, char*)’ defined but not used [-Wunused-function]
+    		 static void yyunput (int c, char * yy_bp )  
+
+
+ * Flex warns that the rule at `shell.l:35` cannot be matched, but by trial and error I discovered that having this rule in place actually prevents a more serious lexing bug from occurring. Again, some Flex/Bison nitty-gritty ought to do the trick.
+ * Not necessarily a bug, but the `set` clause is very picky about being space-separated.
+ * The current `shell.l` file is not great; it's gone through very few touch-ups in the development process and future development should be contingent on getting a better and more robust scanner working.
+ * No line history (will likely be added at some point). 
+ * Current AST design is clunky. 
+ * Exception handling is absent and error recovery is mostly supplied by Flex and Bison defaults which can be dodgy at times.
+            
+##### Flip side: Things I think went pretty well 
+ All things considered, the shell works reasonably well at executing external commands and passing arguments. The variable mechanism is also surprisingly agile; for instance, you can set a variable to a filename and run `source $varname` and it executes as expected. You can even set a variable to another variable like so:  
+ `set brandon = dog`  
+ `set banana = $brandon`  
+ and it sets `banana` to `dog`.
+ 
+ Additionally, KOSH is often very good at managing allocated memory, with slight memory leaks occurring rather infrequently. 
+## Future Development 
+Now that the deadline has passed, my medium-term goals for the project are:
+1. Re-implement the scanner and parser, possibly reentrant, to handle errors more effectively and to handle more sophisticated language features. 
+	* Specifically, I want command substitutions and piped commands to be executed in a sub-shell; this appears possible only with reentrant scanner/parser combinations. 
+	* Additionally, I want to more rigorously define the mechanics for quoting and escaping special characters, and have a scanner/parser combo that can handle them sufficiently. 
+	* All of the above will also require expanding the grammar. 
+2. Get pipes, redirections, `;`s, and command substitution working. 
+3. Implement effective error detection and handling.
+## References (WIP)
+###### C++ 
+[Eric Roberts, *Programming Abstractions in C++*](https://www.pearson.com/us/higher-education/program/Roberts-Programming-Abstractions-in-C/PGM80147.html)    
+[Bjarne Stroustrup, *The C++ Programming Language (4th ed)*](http://www.stroustrup.com/4th.html)  
+[learncpp.com](https://www.learncpp.com/)    
+[cplusplus.com](http://www.cplusplus.com/reference/) and [cppreference.com](https://en.cppreference.com/w/)    
+
+###### Flex and Bison
+[John Levine, *flex & bison*](http://shop.oreilly.com/product/9780596155988.do)   
+[flex](https://westes.github.io/flex/manual/) and [bison](https://www.gnu.org/software/bison/manual/bison.html) documentations     
+###### Linux Programming
+[Mitchell et al, *Advanced Linux Programming*](https://mentorembedded.github.io/advancedlinuxprogramming/) 
+[The Linux man pages](http://man7.org/linux/man-pages/) helped me learn how to program in the Linux environment. I also adapted the example from the [waitpid()](http://man7.org/linux/man-pages/man2/waitpid.2.html) page for my `Shell::execute_external()` method.   
+###### Shell operation    
+[POSIX Specification](http://pubs.opengroup.org/onlinepubs/9699919799/)     
+[*Advanced Bash Scripting*](http://tldp.org/LDP/abs/html/)
