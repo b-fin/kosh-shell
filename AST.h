@@ -103,6 +103,7 @@ public:
   S_command& operator=(const S_command &source);
   ~S_command();
   void print() const;
+  bool has_args() const { bool ret; (m_arguments) ? ret=true : ret=false; return ret; } 
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;
   bool cmd_word_needs_expanding() const;
@@ -250,7 +251,7 @@ public:
   Program& operator=(const Program& source);
   ~Program();
   void print() const;
-  // Useless function for shell.l 
+  // Useless function for shell.l
   void do_nothing() const;
   bool expand_vars(const std::unordered_map<std::string,std::string>& in_s_t);
   bool needs_expanding() const;

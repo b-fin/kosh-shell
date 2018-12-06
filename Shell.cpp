@@ -57,8 +57,6 @@ int Shell::run() {
       Program& prog_ref = *new_root;
 
       exit_status = execute(prog_ref);
-      // Debug print
-      //std::cout<< "Exit status is: " << exit_status << std::endl;
 
       // free memory allocated in this scope
       yy_delete_buffer(bp);
@@ -84,8 +82,6 @@ int Shell::execute(Program& in_prog) {
   bool expanded=true;
   if (in_prog.needs_expanding()) {
     expanded = expand_vars(in_prog);
-    // debug print
-    std::cout<< "expanded is: " << expanded << std::endl;
     if(!expanded) {
       std::cout<< "ERROR: variable expansion failed\n";
       status = EXEC_ERR_VAR_EXP;
@@ -96,8 +92,6 @@ int Shell::execute(Program& in_prog) {
   if (in_prog.m_ccs) {
     current = in_prog.m_ccs;
   } else {
-      // debug print
-      //std::cout<< "EXECUTE: no m_ccs member\n";
       status = EXEC_ERR_MISSING_NODE;
     }
   if (status == EXEC_IN_PROG) {
@@ -154,9 +148,9 @@ int Shell::execute_built_in(S_command &in_com) {
     } else if (in_com.m_cmd_word == "source") {
       status = static_cast<ExecStatus>(execute_source(in_com));
     } else if (in_com.m_cmd_word == "pwd") {
-      status = static_cast<ExecStatus>(execute_pwd(in_com));
+      status = static_cast<ExecStatus>(execute_pwd());
     } else if (in_com.m_cmd_word == "exit"){
-      status = static_cast<ExecStatus>(execute_exit(in_com));
+      status = static_cast<ExecStatus>(execute_exit());
     } else {
         if (KOSH_DEBUG_PRINT) {
           std::cout<< "ERROR: something went wrong in execute_built_in()\n";
@@ -256,11 +250,10 @@ int Shell::execute_cd(const S_command& in_com){
 // Returns:
 //  - Zero on successful execution.
 //  - Nonzero otherwise.
-int Shell::execute_pwd(const S_command& in_com){
-  // remove assert after debugging
-  assert(in_com.m_cmd_word == "pwd");
+int Shell::execute_pwd(){
   ExecStatus status = EXEC_IN_PROG;
-  char *temp = new char[512]; // long-ass char string to handle any cwd paths
+  // looooooong char[], might be overkill
+  char *temp = new char[512];
   temp = getcwd(temp, 512);
   if (!temp) {
     status = EXEC_FAIL;
@@ -354,7 +347,7 @@ int Shell::execute_source(const S_command& in_com){
 
 
 // Returns 0
-int Shell::execute_exit(const S_command& in_com) {
+int Shell::execute_exit() {
   shell_exit = true;
   return 0;
 }

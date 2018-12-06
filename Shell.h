@@ -44,9 +44,9 @@ public:
   int execute_built_in(S_command& in_com);
   int execute_external(S_command& in_com);
   int execute_cd(const S_command&);
-  int execute_pwd(const S_command&);
+  int execute_pwd();
   int execute_source(const S_command&);
-  int execute_exit(const S_command&);
+  int execute_exit();
   int execute_echo(const S_command&);
   int execute_set(const S_command&);
   void print_symbol_table() const;

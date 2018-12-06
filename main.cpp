@@ -5,7 +5,6 @@
 #include "Shell.h"
 
 int main(){
-  //yydebug = 1;
   Shell *sh = new Shell();
   int exit_status;
   do {

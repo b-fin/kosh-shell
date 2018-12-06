@@ -5,7 +5,6 @@
 %code requires {
 
   #include "AST.h"
-  #define YYDEBUG 1
   #include <iostream>
   #include <string>
   extern void yyerror(Program &, std::string);
@@ -60,7 +59,7 @@
 %%
 
 program           : complete_commands { $$ = new Program($1); root = *$$; /*delete $$;*/}
-                  | complete_commands AMP { $$ = new Program($1); root = *$$; $$->set_bg(); free($2); /*delete $$;*/ }
+                  | complete_commands AMP { $$ = new Program($1); root = *$$; $$->m_background=true; free($2); /*delete $$;*/ }
                   ;
 complete_commands : complete_commands SEMICOLON pipe_sequence redirect
                         { Ccs *temp = new Ccs(nullptr,$3,$4); free($2);
@@ -80,7 +79,7 @@ pipe_sequence     : pipe_sequence PIPE command
                   ;
 command           : simple_command { $$ = new Command($1,nullptr); }
                   ;
-simple_command    : set_clause { $$ = new S_command($1,nullptr,nullptr); $$->make_set(); }
+simple_command    : set_clause { $$ = new S_command($1,nullptr,nullptr); $$->m_is_set=true; }
                   | cmd_word arguments { $$ = new S_command(nullptr,$1,$2); }
                   | cmd_word { $$ = new S_command(nullptr,$1,nullptr); }
                   ;
