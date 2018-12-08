@@ -29,8 +29,52 @@
 * Support for looping over lists: **not done**
 	* ```for varname from list: statements```
 ## Overview / Features
-### #TODO
+##### Built-in Commands  
+The commands that KOSH implements internally are:
+ - `cd [directory]`: The shell changes the current directory to the `filename` argument, if valid; if no argument is given, it changes to the user's `$HOME`directory. If an invalid argument is supplied, no change is made.
+ - `echo [arguments]`: The shell prints the optional arguments to the `stdin`; if no arguments are supplied, it prints a newline.
+ - `pwd`: The shell prints the PWD to the `stdin`. 
+ - `exit`: The shell exits with a status of 0 (normal exit). 
+ - `source filename`: The shell attempts to locate the argument filename in the local directory; if it can't be located, it searches the `$PATH` variable; upon opening the file, it grabs the input line-by-line and executes them; if the filename is not valid, no execution takes place. 
+ - `set varname = value`: The shell adds the `value:varname` pair to a symbol table, after which the user may substitute variables in commands by typing `$varname`. Variables may be substituted in commands, arguments, or `value`s in `set` commands themselves (but not in `varname`s). `varname` must start with either a letter or an underscore and may be followed by letters, digits, or underscores; `value` may be a string consisting of letters, digits, or spaces (if properly quoted). If the `varname` or `value` parameters are not valid, no variable setting occurs. Variables can be overwritten by subsequent `set` commands. The command syntax is sensitive to whitespace.
+##### External Commands
+KOSH supports (in theory) any command that is installed on a user's machine. 
+##### Grammar
+The KOSH grammar is, currently, a simplified version of that specified by POSIX. 
+```
+program				:	complete_commands 
+					|	complete_commands '&'
+                    
+complete_commands	:	complete_commands ';' pipe_sequence redirect
+					|	complete_commands ';' pipe_sequence 
+                    |	pipe_sequence redirect
+                    | 	pipe_sequence
+                    
+pipe_sequence		: 	pipe_sequence '|' command 
+ 					| 	command
+                    
+command				:	simple_command
 
+simple_command		:	set_clause
+					|	cmd_word arguments
+                    |	cmd_word
+                    
+set_clause			:	"set" NAME '=' VALUE
+
+cmd_word			:	WORD
+
+arguments			:	arguments WORD
+					|	WORD          
+
+redirect			: 	'<' WORD
+					|	'>' WORD
+                    | 	'>>' WORD
+					
+```
+##### Quoting
+The following characters are important for KOSH operation and must be quoted to represent themselves:  
+`$`, `|`, `;`, `&`.   
+Quoting is, however, a work in progress and formal quoting syntax will be provided here when it is functional. 
 ## Instructions for building / running KOSH
 ### Required software
 KOSH was designed using the following software; it may build and run using different versions, but this is not explicitly supported.
@@ -55,7 +99,7 @@ To exit KOSH, type:
 `exit`.
 
 ## Source code overview 
-The code is comprised of the following files:  
+The code is comprised the following files:  
 * Shell.h / Shell.cpp 
 * AST.h / AST.cpp
 * main.cpp
