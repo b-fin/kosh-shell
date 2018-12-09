@@ -170,14 +170,14 @@ As of December 5th, 2018:
  `set banana = $brandon`  
  and it sets `banana` to `dog`.
  
- Additionally, KOSH is often very good at managing allocated memory, with slight memory leaks occurring rather infrequently. 
+ Additionally, KOSH is often very good at managing allocated memory, with slight memory leaks occurring rather infrequently (usually due to Flex scanner errors). 
 ## Future Development 
 Now that the deadline has passed, my medium-term goals for the project are:
 1. Re-implement the scanner and parser, possibly reentrant, to handle errors more effectively and to handle more sophisticated language features. 
 	* Specifically, I want command substitutions and piped commands to be executed in a sub-shell; this appears possible only with reentrant scanner/parser combinations. 
 	* Additionally, I want to more rigorously define the mechanics for quoting and escaping special characters, and have a scanner/parser combo that can handle them sufficiently. 
 	* All of the above will also require expanding the grammar. 
-2. Get pipes, redirections, `;`s, and command substitution working. 
+2. Get pipes, redirections, `;`s, and command substitution working, possibly using [this page](https://linux.die.net/man/7/pipe) as a starting point.
 3. Implement effective error detection and handling.
 ## References (WIP)
 ###### C++ 
