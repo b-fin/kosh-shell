@@ -195,3 +195,5 @@ Now that the deadline has passed, my medium-term goals for the project are:
 ###### Shell operation    
 [POSIX Specification](http://pubs.opengroup.org/onlinepubs/9699919799/)     
 [*Advanced Bash Scripting*](http://tldp.org/LDP/abs/html/)
+###### Miscellany 
+Thanks to Barrett K for looking over my code at various points and offering valuable suggestions for improvement. 
