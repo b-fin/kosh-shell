@@ -130,6 +130,8 @@ Before starting this project, I had very little idea of how a shell like BASH wo
 For the grammar, I based it largely on that specified by POSIX (since it was my starting point for learning shell operation), making accommodations for KOSH-specific functionality (for instance, we have no need for `&&` or `||` constructs, but we do have a particular `set` syntax).  
 
 For the program itself, it largely evolved from my knowledge of Flex/Bison: I knew the program would need to parse input and that an effective way of operating on that input is to create an AST, so I started with the lexer and parser and based the AST on that.   
+The Flex/Bison specification files turned out to be vastly underpowered; in the future, I would like to relocate the variable expansion capability from the .cpp source files to the lexer itself, for starters, and continue adding advanced features afterwards. 
+
 Of note about the KOSH AST interface is that each kind of node is a separate class, rather than a level in a hierarchy of classes as is typical. This choice was made largely because I had limited time to (re)learn C++ for this project, so I chose to focus on the aspects of the language I thought would be most immediately useful and simultaneously simple to implement, and unfortunately class inheritance was not one of those for me (whether this was a reasonable decision is entirely debatable). In addition, the relatively low number of distinct grammatical elements made it feasible to implement each as a separate class.  
 In an early version of the project, I had the `execute` functionality embedded within the AST itself, which turned out to be incredibly unwieldy, so it was implemented in the Shell interface instead.
 
@@ -155,7 +157,8 @@ As of December 5th, 2018:
  * At the `make` command, the compiler offers this complaint (it seems out of my control, but I'm sure there's some Flex/Bison hackery I could throw together when I have time):  
  	>  lex.yy.c:1225:17: warning: ‘void yyunput(int, char*)’ defined but not used [-Wunused-function]
     		 static void yyunput (int c, char * yy_bp )  
-
+As of December 15th, 2018:
+ * Attempting to set a variable using a single character as the name (*e.g* `set b = test`) results in a syntax error from Flex.  
 
  * Flex warns that the rule at `shell.l:35` cannot be matched, but by trial and error I discovered that having this rule in place actually prevents a more serious lexing bug from occurring. Again, some Flex/Bison nitty-gritty ought to do the trick.
  * Not necessarily a bug, but the `set` clause is very picky about being space-separated.
